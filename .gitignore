@@ -1,0 +1,21 @@
+# Node / npm
+node_modules/
+
+# Electron build artifacts (mantemos so o .exe final)
+dist/win-unpacked/
+dist/builder-debug.yml
+dist/*.7z
+dist/*.blockmap
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# nao versionar (especificacao recebida do professor + mockups)
+Requisitos*.pdf
+IMG_*.jpeg
+image.png

@@ -1,0 +1,647 @@
+\documentclass[12pt, a4paper]{article}
+
+% ── Codificação e idioma ──
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+
+% ── Layout de página ──
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+
+% ── Tipografia ──
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0.15cm}
+
+% ── Cores ──
+\usepackage{xcolor}
+\definecolor{sec}{HTML}{1A2744}
+\definecolor{accent}{HTML}{00ACC1}
+\definecolor{warm}{HTML}{E65100}
+\definecolor{cyanfloor}{HTML}{00E5FF}
+\definecolor{yellowfloor}{HTML}{FFD600}
+\definecolor{magentafloor}{HTML}{E040FB}
+
+% ── Seções ──
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries\color{sec}}{\thesection.}{0.5em}{}[\vspace{0.2em}\color{accent}\hrule\vspace{0.4em}]
+\titleformat{\subsection}{\large\bfseries\color{sec}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{sec}}{\thesubsubsection.}{0.5em}{}
+
+% ── Tabelas ──
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+% ── Listas ──
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em, itemsep=2pt, topsep=4pt}
+\setlist[enumerate]{leftmargin=1.5em, itemsep=2pt, topsep=4pt}
+
+% ── Figuras e floats ──
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, labelsep=endash, skip=6pt}
+
+% ── Símbolos ──
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% ── Links ──
+\usepackage[colorlinks=true, linkcolor=sec, urlcolor=accent, citecolor=sec]{hyperref}
+
+% ── Diagramas TikZ ──
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, backgrounds, fit}
+
+\tikzset{
+  umlstate/.style={
+    rectangle, rounded corners=6pt, draw=sec, fill=sec!6,
+    minimum width=2.6cm, minimum height=0.95cm,
+    text centered, font=\small\bfseries, line width=0.7pt
+  },
+  umlact/.style={
+    rectangle, rounded corners=4pt, draw=sec, fill=accent!8,
+    minimum width=2cm, minimum height=0.7cm,
+    text centered, font=\footnotesize, line width=0.6pt
+  },
+  umldec/.style={
+    diamond, draw=sec, fill=yellowfloor!15, aspect=2.5,
+    text centered, font=\footnotesize, inner sep=1pt, line width=0.6pt
+  },
+  umlstart/.style={
+    circle, draw=sec, fill=sec, minimum size=7pt, inner sep=0pt
+  },
+  umlend/.style={
+    circle, draw=sec, fill=white, minimum size=9pt, inner sep=0pt,
+    line width=1.2pt, path picture={
+      \fill[sec] (path picture bounding box.center) circle (3pt);
+    }
+  },
+  umlcomp/.style={
+    rectangle, draw=sec, fill=accent!6, minimum width=2.6cm,
+    minimum height=1cm, text centered, font=\small, line width=0.7pt
+  },
+  arr/.style={-{Stealth[length=2.2mm, width=1.8mm]}, thick, color=sec!70},
+  arrdash/.style={-{Stealth[length=2.2mm, width=1.8mm]}, thick, dashed, color=warm!70},
+  lbl/.style={font=\scriptsize, color=sec!75},
+}
+
+% ── Cabeçalho/Rodapé ──
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{sec!60}\textit{VOID DESCENT --- Game Design Document}}
+\fancyhead[R]{\small\color{sec!60}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyfoot[C]{\small\color{sec!40}iCEV --- Instituto de Ensino Superior}
+
+% ══════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── CAPA ──
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+
+  {\large\textsc{iCEV --- Instituto de Ensino Superior}}\\[0.3cm]
+  {\normalsize Introdu\c{c}\~ao ao Desenvolvimento de Jogos}\\[3cm]
+
+  {\Huge\bfseries\color{sec} VOID DESCENT}\\[0.5cm]
+  {\Large\color{accent} Game Design Document}\\[0.3cm]
+  {\normalsize Requisitos GDD --- P1}\\[4cm]
+
+  {\large
+    \textbf{Alunos:}\\[0.2cm]
+    Luis Gustavo Ol\'impio\\
+    Lauan Matheus\\
+    Jos\'e Melqu\'iades\\
+    Jo\~ao Leonardi\\[0.3cm]
+  }
+
+  \vfill
+
+  {\normalsize Teresina --- PI}\\[0.2cm]
+  {\normalsize Mar\c{c}o de 2026}
+\end{titlepage}
+
+% ── SUMÁRIO ──
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════
+\section{Vis\~ao Geral (High Concept)}
+% ══════════════════════════════════════════════════════════════
+
+\textbf{T\'itulo do Jogo:} VOID DESCENT
+
+\textbf{Elevator Pitch:} ``Roguelike onde cada morte recria o labirinto. Des\c{c}a tr\^es andares de um abismo procedural, colete armas e destrua o N\'ucleo antes que o Void te consuma.''
+
+\textbf{G\^enero e Plataforma:} Trata-se de um roguelike top-down em tempo real, desenvolvido para PC (Windows). A base tecnol\'ogica \'e JavaScript puro com renderiza\c{c}\~ao WebGL, e a vers\~ao final ser\'a distribu\'ida como execut\'avel \texttt{.exe} por meio do Electron, o que elimina a necessidade de o jogador abrir um navegador para jogar e garante uma experi\^encia nativa de desktop.
+
+\textbf{P\'ublico-Alvo:} O p\'ublico prim\'ario s\~ao jogadores entre 16 e 30 anos que j\'a consomem roguelikes e shooters top-down com frequ\^encia, e que valorizam a rejogabilidade e o dom\'inio progressivo de mec\^anicas atrav\'es da repeti\c{c}\~ao. O formato de runs curtas, com dura\c{c}\~ao entre 8 e 12 minutos por partida, tamb\'em abre espa\c{c}o para um p\'ublico secund\'ario de jogadores mais casuais, que buscam sess\~oes r\'apidas e intensas sem compromisso de longo prazo com um \'unico save ou campanha.
+
+\textbf{Diferencial (USP):} O principal diferencial de Void Descent \'e a proposta de ser inteiramente procedural. Na pr\'atica, isso significa que toda a arte, todos os mapas, todos os inimigos e todo o \'audio s\~ao gerados por algoritmos em tempo de execu\c{c}\~ao, sem depender de nenhum asset externo. N\~ao h\'a texturas desenhadas \`a m\~ao, n\~ao h\'a sprites importados de bancos de imagem, n\~ao h\'a arquivos de som gravados. O estilo visual adota uma est\'etica neon-sobre-preto com blocos 3D, sprites procedurais, ilumina\c{c}\~ao por v\'ertice, fog atmosf\'erico e posteriza\c{c}\~ao de cor, o que produz uma atmosfera densa e imersiva mesmo com custo t\'ecnico baixo. Al\'em disso, como cada dungeon \'e regenerada integralmente a cada nova run, n\~ao existem duas partidas iguais, e a rejogabilidade surge de forma org\^anica, como consequ\^encia direta da arquitetura procedural do jogo.
+
+% ══════════════════════════════════════════════════════════════
+\section{Mec\^anicas de Jogo (Game Mechanics)}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Controles}
+
+O esquema de controle adotado \'e o twin-stick adaptado para teclado e mouse, que \'e o padr\~ao consolidado em shooters top-down e foi escolhido justamente por oferecer separa\c{c}\~ao total entre movimenta\c{c}\~ao e mira. Na pr\'atica, o jogador usa WASD para se deslocar pelo cen\'ario e o mouse para direcionar a mira e os ataques. Essa separa\c{c}\~ao \'e fundamental porque permite que o jogador se mova em uma dire\c{c}\~ao enquanto dispara em outra, o que abre espa\c{c}o para manobras evasivas e posicionamento t\'atico durante o combate.
+
+\begin{table}[H]
+  \centering
+  \caption{Mapeamento de controles}
+  \begin{tabularx}{0.85\textwidth}{l L}
+    \toprule
+    \textbf{Tecla} & \textbf{A\c{c}\~ao} \\
+    \midrule
+    W / A / S / D       & Movimenta\c{c}\~ao em 4 dire\c{c}\~oes e diagonais \\
+    Mouse (cursor)      & Dire\c{c}\~ao da mira e dos proj\'eteis \\
+    Clique esquerdo     & Atacar (melee ou ranged, conforme arma equipada) \\
+    Espa\c{c}o          & Dash (esquiva r\'apida com invencibilidade breve, cooldown de 1,5\,s) \\
+    E                   & Interagir (coletar item ou usar escada) \\
+    Esc                 & Pausar o jogo \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Condi\c{c}\~oes de Vit\'oria e Derrota}
+
+A \textbf{vit\'oria} \'e alcan\c{c}ada quando o jogador consegue derrotar o boss ``O N\'ucleo'' na arena do Andar~3. Assim que o boss \'e destru\'ido, o jogo redireciona automaticamente para a Tela de Vit\'oria, onde s\~ao exibidas as estat\'isticas completas daquela run: o tempo total gasto, a quantidade de inimigos eliminados, os itens coletados ao longo do caminho e a pontua\c{c}\~ao final calculada.
+
+A \textbf{derrota}, por sua vez, ocorre no momento em que os pontos de vida do jogador chegam a zero. A transi\c{c}\~ao para a Tela de Game Over \'e imediata e exibe as mesmas estat\'isticas da run, al\'em de oferecer o bot\~ao ``Tentar Novamente'', que reinicia a partida a partir do Andar~1 com uma dungeon completamente regenerada. \'E importante destacar que o jogo adota o modelo de permadeath: todo o progresso de itens, armas e passivos acumulado ao longo da run \'e permanentemente perdido. Essa escolha de design \'e deliberada, pois faz com que cada decis\~ao durante a partida carregue peso real, j\'a que n\~ao existe possibilidade de ``salvar e carregar''.
+
+\subsection{Sistemas}
+
+\subsubsection{Combate}
+
+O combate \'e inteiramente em tempo real, sem nenhuma pausa, menu de sele\c{c}\~ao ou sistema de turnos. Essa escolha \'e proposital: em um combate em tempo real, a habilidade mec\^anica do jogador (reflexos, mira, posicionamento espacial) \'e testada de forma cont\'inua e ininterrupta, ao contr\'ario de sistemas baseados em turnos onde a vit\'oria depende predominantemente de decis\~oes estrat\'egicas isoladas. O jogador pode equipar armas de dois tipos: \textbf{melee}, que causa mais dano mas exige proximidade com o alvo, ou \textbf{ranged}, que dispara proj\'eteis a dist\^ancia com dano menor em troca de seguran\c{c}a posicional. Essa distin\c{c}\~ao n\~ao \'e meramente funcional; ela cria um dilema constante entre risco e recompensa que permeia toda a experi\^encia de combate e se reconfigura a cada sala, dependendo da composi\c{c}\~ao de inimigos encontrada. Uma sala cheia de Seekers (melee, lentos) favorece armas ranged; uma sala com Shooters (ranged, fr\'ageis) pode favorecer uma arma melee r\'apida que os elimine antes de atirarem. A leitura r\'apida de cada sala e a adapta\c{c}\~ao t\'atica instant\^anea \'e o que separa jogadores iniciantes de jogadores experientes. Al\'em disso, cada inimigo telegrafa seus ataques com um flash visual antes de efetivamente agir, o que d\'a ao jogador uma janela de rea\c{c}\~ao curta por\'em suficiente para quem est\'a atento. Esse telegrama \'e um pilar do design de combate justo: o jogador nunca \'e punido por algo que n\~ao poderia ter previsto.
+
+O dash \'e a principal ferramenta defensiva e, argumentavelmente, a mec\^anica mais importante de todo o jogo. Ao ser acionado, ele concede 0,2\,s de invencibilidade (conhecidos como \textit{i-frames} na terminologia de game design), o que permite ao jogador atravessar proj\'eteis e ataques inimigos sem receber dano durante essa janela. O cooldown de 1,5\,s entre usos consecutivos impede que o jogador abuse da mec\^anica e for\c{c}a uma escolha deliberada sobre o momento certo para desviar: usar o dash cedo demais para evitar um proj\'etil pode significar n\~ao t\^e-lo dispon\'ivel quando um ataque mais perigoso vier em seguida. Esse gerenciamento de cooldown adiciona uma camada de profundidade estrat\'egica ao que poderia ser uma mec\^anica puramente reativa. Tocar fisicamente em inimigos tamb\'em causa dano de contato, punindo posicionamento descuidado e incentivando o jogador a manter dist\^ancia segura mesmo quando n\~ao est\'a sob ataque direto. O resultado \'e um sistema de combate onde a movimenta\c{c}\~ao \'e t\~ao importante quanto o ataque: sobreviver n\~ao \'e apenas quest\~ao de causar dano r\'apido, mas de ocupar o espa\c{c}o certo no momento certo.
+
+\subsubsection{Vida}
+
+O jogador inicia cada run com 5 cora\c{c}\~oes, sendo que cada cora\c{c}\~ao representa 1 ponto de vida. O n\'umero 5 n\~ao \'e arbitr\'ario: com 5 pontos de vida, o jogador pode cometer exatamente 4 erros antes de morrer, o que \'e suficiente para ser toler\'avel nas primeiras salas, mas escasso o bastante para criar tens\~ao real nos andares mais profundos, onde a cura acumulada at\'e aquele ponto j\'a foi consumida. Ataques de inimigos comuns retiram 1 cora\c{c}\~ao, enquanto o boss retira 2 por golpe, o que torna os erros contra ele especialmente punitivos e comunica, sem nenhum texto explicativo, que o confronto final exige um n\'ivel de aten\c{c}\~ao e precis\~ao diferente de tudo que veio antes. Os itens de cura existem, mas s\~ao intencionalmente raros: aparecem em ba\'us ou como drops aleat\'orios ap\'os limpar salas, e restauram apenas 1 cora\c{c}\~ao por uso. O sistema n\~ao inclui nenhum tipo de regenera\c{c}\~ao passiva, de modo que cada hit recebido tem peso real e acumulativo na sobreviv\^encia da run: um jogador que chega ao Andar~3 com 2 cora\c{c}\~oes restantes est\'a em situa\c{c}\~ao fundamentalmente diferente de um que chega com 5, e essa diferen\c{c}a \'e resultado direto da performance nas salas anteriores. Essa escassez \'e uma decis\~ao de design central: ela for\c{c}a o jogador a tratar HP como um recurso estrat\'egico finito, n\~ao como algo que se recupera naturalmente com o tempo, e faz com que cada golpe evitado com sucesso tenha valor tang\'ivel na economia interna da run.
+
+\subsubsection{Itens}
+
+O sistema de itens foi projetado para ser simples de entender mas estrat\'egico de utilizar, seguindo o princ\'ipio de \textit{easy to learn, hard to master} que \'e caracter\'istico dos melhores roguelikes. Existe um pool fixo de 8 armas predefinidas, cada uma com atributos distintos de dano, velocidade, alcance e tipo (melee ou ranged). A t\'itulo de exemplo, a ``L\^amina R\'apida'' \'e uma arma melee com dano~2 e velocidade alta, ideal para jogadores agressivos que preferem eliminar inimigos rapidamente a curta dist\^ancia, enquanto o ``Canh\~ao Neon'' \'e uma arma ranged com dano~4 e velocidade lenta, mais adequada para quem prefere manter dist\^ancia e trocar DPS (dano por segundo) por seguran\c{c}a posicional. O jogador equipa uma \'unica arma por vez e pode troc\'a-la ao encontrar outra no ch\~ao, descartando a anterior permanentemente. Essa limita\c{c}\~ao de slot \'unico \'e uma decis\~ao de design central, pois transforma cada troca de arma numa escolha com consequ\^encias reais e irrevers\'iveis: o jogador n\~ao pode ``testar'' a arma nova e voltar atr\'as, o que for\c{c}a uma avalia\c{c}\~ao r\'apida de custo-benef\'icio antes de cada troca.
+
+Al\'em das armas, o jogador disp\~oe de 1 slot de \textbf{passivo}, que \'e ocupado por modificadores que persistem durante toda a run (como velocidade aumentada, dano extra ou HP adicional), e 1 slot de \textbf{consum\'ivel}, reservado para po\c{c}\~oes de cura. A limita\c{c}\~ao a um \'unico passivo gera o mesmo tipo de dilema das armas: ao encontrar um novo passivo, o jogador precisa avaliar se o benef\'icio oferecido supera o que j\'a possui, sabendo que a troca \'e definitiva. Ba\'us aparecem uma vez por andar e cont\^em um item aleat\'orio, funcionando como o principal ponto de recompensa garantida em cada n\'ivel e como momento de decis\~ao estrat\'egica, j\'a que o item dentro do ba\'u pode exigir o abandono de algo que o jogador j\'a utiliza.
+
+\subsubsection{Gera\c{c}\~ao Procedural de Dungeon}
+
+A gera\c{c}\~ao de cada andar \'e feita por um algoritmo de \textit{room placement}, que funciona da seguinte forma: salas retangulares de tamanhos variados s\~ao posicionadas aleatoriamente sobre uma grade bidimensional, respeitando regras de espa\c{c}amento m\'inimo para evitar sobreposi\c{c}\~ao e garantir corredores transpon\'iveis, e em seguida o algoritmo tra\c{c}a corredores para conect\'a-las. Ap\'os essa etapa, uma valida\c{c}\~ao por \textit{flood fill} percorre o mapa a partir do ponto de spawn do jogador para garantir que todas as salas sejam alcan\c{c}\'aveis; caso alguma sala fique isolada, o algoritmo descarta o layout e regenera integralmente at\'e obter um resultado v\'alido. Essa abordagem de gera\c{c}\~ao com p\'os-valida\c{c}\~ao garante que o jogador nunca encontre caminhos bloqueados ou salas inacess\'iveis, mantendo a integridade do fluxo de gameplay mesmo diante da aleatoriedade inerente ao processo. Os Andares~1 e~2 cont\^em entre 5 e 8 salas cada, incluindo obrigatoriamente uma sala de ba\'u. O Andar~3 \'e intencionalmente mais curto, composto por poucas salas regulares seguidas diretamente pela arena do boss, de modo a concentrar a tens\~ao no confronto final e evitar que o jogador chegue ao boss com fadiga decis\'oria excessiva.
+
+O fluxo dentro de cada sala segue uma regra simples mas eficaz, comum a roguelikes cl\'assicos: ao entrar em uma sala que cont\'em inimigos, as portas trancam automaticamente e s\'o voltam a abrir quando todos os inimigos daquela sala forem eliminados. Esse mecanismo, conhecido como \textit{lock-and-clear}, cumpre duas fun\c{c}\~oes simult\^aneas: impede que o jogador evite combates simplesmente correndo pelas salas, e transforma cada sala em uma arena contida com in\'icio, meio e fim definidos, o que proporciona uma sensa\c{c}\~ao de conclus\~ao e recompensa a cada desafio superado. A escada de descida para o pr\'oximo andar aparece na \'ultima sala limpa do andar atual, incentivando o jogador a explorar o n\'ivel por completo antes de prosseguir e garantindo que ele enfrente todos os encontros projetados para aquele est\'agio de dificuldade.
+
+\subsubsection{Pontua\c{c}\~ao}
+
+A pontua\c{c}\~ao de cada run \'e calculada pela f\'ormula $\text{score} = \text{kills} \times \text{combo} + \text{itens} \times 100$, onde o multiplicador de combo incrementa a cada elimina\c{c}\~ao consecutiva que o jogador realiza sem levar dano, at\'e o teto de $\times4$. Quando o jogador \'e atingido, o combo reseta imediatamente para $\times1$, representando n\~ao apenas perda de HP mas tamb\'em perda de potencial de pontua\c{c}\~ao. A l\'ogica por tr\'as desse sistema \'e criar uma tens\~ao permanente entre duas estrat\'egias opostas: avan\c{c}ar agressivamente para manter o combo alto e multiplicar os pontos, arriscando levar dano e perder o multiplicador, ou recuar para preservar HP e garantir a sobreviv\^encia, sacrificando a pontua\c{c}\~ao acumulada. Essa tens\~ao \'e intencional, pois transforma a pontua\c{c}\~ao em uma medida n\~ao apenas de efici\^encia, mas de ousadia calculada. Jogadores que dominam o dash e o posicionamento conseguem manter combos longos e atingir scores significativamente maiores, o que alimenta a competi\c{c}\~ao pessoal por personal bests entre runs e cria uma camada adicional de rejogabilidade: mesmo ap\'os completar o jogo (derrotar o boss), o jogador tem motiva\c{c}\~ao para continuar jogando em busca da pontua\c{c}\~ao perfeita, onde nenhum dano \'e recebido e o combo nunca \'e quebrado.
+
+% ══════════════════════════════════════════════════════════════
+\newpage
+\section{O Game Loop}
+% ══════════════════════════════════════════════════════════════
+
+O game loop \'e, por defini\c{c}\~ao, o ciclo de a\c{c}\~oes que o jogador repete continuamente ao longo de toda a experi\^encia de jogo. Em termos de design, a qualidade desse ciclo \'e o que determina se um jogo ser\'a intrinsecamente divertido ou apenas toler\'avel: um loop bem constru\'ido gera engajamento autossuficiente, onde o pr\'oprio ato de jogar j\'a \'e recompensador por si s\'o, enquanto um loop mal concebido depende de est\'imulos externos --- cutscenes, desbloqueios cosm\'eticos, narrativa --- para compensar a aus\^encia de satisfa\c{c}\~ao mec\^anica.
+
+No caso de Void Descent, o game loop est\'a estruturado em dois n\'iveis complementares e interdependentes. O primeiro \'e o \textbf{loop micro}, que descreve a a\c{c}\~ao segundo a segundo dentro de cada sala e constitui o n\'ucleo t\'atil da experi\^encia --- \'e o que o jogador \textit{sente nas m\~aos}. O segundo \'e o \textbf{loop macro}, que descreve a progress\~ao e a motiva\c{c}\~ao do jogador ao longo de uma run completa e entre runs consecutivas --- \'e o que o jogador \textit{sente na cabe\c{c}a}. A separa\c{c}\~ao anal\'itica entre esses dois n\'iveis \'e fundamental porque cada um cumpre uma fun\c{c}\~ao distinta na experi\^encia total: o micro precisa ser visceralmente satisfat\'orio para manter o jogador engajado a cada instante, produzindo aquilo que a teoria de game design denomina \textit{flow state} (estado de fluxo), enquanto o macro precisa fornecer prop\'osito, dire\c{c}\~ao e variabilidade suficientes para que esse engajamento n\~ao se esgote ap\'os as primeiras tentativas. Quando ambos os n\'iveis funcionam em harmonia, o resultado \'e o fen\^omeno coloquialmente conhecido como ``s\'o mais uma run'' --- o jogador pretende parar, mas a combina\c{c}\~ao de satisfa\c{c}\~ao imediata com curiosidade sobre o que a pr\'oxima dungeon vai gerar torna a interrup\c{c}\~ao psicologicamente dif\'icil.
+
+\subsection{Loop Micro (segundo a segundo)}
+
+O loop micro \'e o ciclo de a\c{c}\~ao que o jogador repete a cada 5 a 10 segundos enquanto limpa uma sala. Ele define a sensa\c{c}\~ao momento a momento do jogo --- o chamado \textit{game feel} --- e, por essa raz\~ao, precisa ser intrinsecamente satisfat\'orio para que toda a experi\^encia se sustente. Se o ato b\'asico de mover, mirar, atacar e desviar n\~ao for divertido por si s\'o, nenhuma quantidade de conte\'udo, progress\~ao ou narrativa vai compensar essa defici\^encia. Em Void Descent, esse ciclo foi projetado segundo o princ\'ipio de \textit{input-output imediato}: toda a\c{c}\~ao do jogador produz uma resposta vis\'ivel e aud\'ivel em menos de um frame, eliminando qualquer sensa\c{c}\~ao de lat\^encia entre inten\c{c}\~ao e resultado. Essa responsividade extrema \'e o que distingue um combate que ``parece bom'' de um combate que o jogador apenas tolera.
+
+O ciclo funciona da seguinte maneira:
+
+\begin{enumerate}
+  \item \textbf{Entrada.} O jogador entra em uma sala. As portas trancam e os inimigos surgem em posi\c{c}\~oes distribu\'idas pelo espa\c{c}o.
+  \item \textbf{Processamento.} O jogador se movimenta pelo cen\'ario (WASD), direciona a mira (mouse), realiza ataques (clique) e desvia de ataques inimigos (espa\c{c}o para dash). Os inimigos reagem simultaneamente: alguns perseguem, outros atiram \`a dist\^ancia, outros cercam. Cada tipo \'e previs\'ivel individualmente, mas o conjunto de v\'arios tipos na mesma sala produz situa\c{c}\~oes ca\'oticas que exigem improvisa\c{c}\~ao r\'apida.
+  \item \textbf{Feedback.} Cada a\c{c}\~ao do jogador e dos inimigos \'e acompanhada por respostas visuais e sonoras imediatas:
+    \begin{itemize}
+      \item Quando um inimigo \'e atingido, ele exibe um flash branco, emite part\'iculas neon e um som de impacto \'e reproduzido.
+      \item Quando o jogador \'e atingido, a tela inteira pisca brevemente em vermelho, um som grave ressoa e um cora\c{c}\~ao desaparece da HUD.
+      \item Quando um inimigo \'e eliminado, uma explos\~ao de part\'iculas ocorre no local e um popup de score flutua na tela.
+      \item Quando todos os inimigos da sala s\~ao eliminados, as portas abrem com um som mec\^anico e h\'a possibilidade de drop de item.
+    \end{itemize}
+\end{enumerate}
+
+A combina\c{c}\~ao simult\^anea de mover, mirar, atacar e desviar faz com que o jogador nunca esteja parado; h\'a tens\~ao constante em cada segundo de gameplay, e essa tens\~ao \'e o ingrediente essencial do \textit{flow state}: o equil\'ibrio entre desafio e habilidade que mant\'em o jogador em um estado de concentra\c{c}\~ao profunda e prazerosa. O dash com i-frames transfere integralmente a responsabilidade para o jogador: se ele morre, a culpa \'e sempre dele, nunca do jogo. Esse princ\'ipio, denominado \textit{fair difficulty} na teoria de game design, \'e o que separa a dificuldade frustrante (onde o jogador sente que o jogo \'e injusto) da dificuldade motivadora (onde o jogador reconhece que poderia ter jogado melhor). Void Descent se posiciona deliberadamente no segundo caso: cada inimigo telegrafa seus ataques, cada proj\'etil \'e vis\'ivel e evit\'avel, e o dash est\'a sempre dispon\'ivel desde que o cooldown tenha expirado. N\~ao h\'a mortes aleat\'orias nem situa\c{c}\~oes imposs\'iveis; h\'a apenas execu\c{c}\~ao insuficiente. Esse senso de ag\^encia absoluta, de que a sobreviv\^encia depende exclusivamente da habilidade do jogador, \'e o que torna o loop micro intrinsecamente viciante e repet\'ivel: o jogador morre, mas sabe exatamente o que fez de errado, e esse conhecimento \'e o combust\'ivel que alimenta a pr\'oxima tentativa.
+
+\begin{figure}[H]
+  \centering
+  \caption{Diagrama de atividades: Loop Micro (ciclo de combate por sala)}
+  \label{fig:microloop}
+  \begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+    % Nós em ciclo
+    \node[umlact] (enter)   at (90:2.6)  {Entrar na sala};
+    \node[umlact] (lock)    at (30:2.6)  {Trancar portas};
+    \node[umlact] (fight)   at (330:2.6) {Combater};
+    \node[umldec] (clear)   at (270:2.6) {Limpa?};
+    \node[umlact] (unlock)  at (210:2.6) {Destrancar};
+    \node[umlact] (collect) at (150:2.6) {Coletar drops};
+
+    % Fluxo principal (ciclo)
+    \draw[arr] (enter)   -- (lock);
+    \draw[arr] (lock)    -- (fight);
+    \draw[arr] (fight)   -- (clear);
+    \draw[arr] (clear)   -- node[lbl, below left] {Sim} (unlock);
+    \draw[arr] (unlock)  -- (collect);
+    \draw[arr] (collect) -- (enter);
+
+    % Loop de combate
+    \draw[arr] (clear.east) to[bend left=35] node[lbl, right] {N\~ao} (fight.south);
+
+    % Saída por morte
+    \node[umlstate, fill=warm!8, font=\footnotesize\bfseries] (go) at (5.2, -1.2) {Game Over};
+    \draw[arrdash] (fight.east) ++(0.1,0) -- node[lbl, above] {HP = 0} (go);
+
+    % Marcador de início
+    \node[umlstart] (s) at (90:3.8) {};
+    \draw[arr] (s) -- (enter);
+  \end{tikzpicture}
+\end{figure}
+
+\subsection{Loop Macro (minuto a minuto)}
+
+O loop macro responde a uma pergunta diferente e mais profunda: por que o jogador continua repetindo o loop micro? Ou seja, o que o motiva a entrar na pr\'oxima sala, descer ao pr\'oximo andar, e eventualmente come\c{c}ar uma nova run inteira ap\'os morrer e perder tudo? Em jogos lineares, a resposta costuma ser a narrativa --- o jogador quer saber o que acontece a seguir. Em jogos com progress\~ao permanente, a resposta costuma ser o ac\'umulo de poder --- o jogador quer desbloquear a pr\'oxima habilidade ou item. Em Void Descent, nenhum desses mecanismos tradicionais existe: n\~ao h\'a narrativa ramificada, n\~ao h\'a upgrades permanentes entre runs, n\~ao h\'a \'arvore de habilidades persistente. A motiva\c{c}\~ao precisa emergir inteiramente da pr\'opria estrutura do loop, e isso ocorre atrav\'es de tr\^es eixos que se retroalimentam.
+
+O primeiro eixo \'e o \textbf{ciclo de recompensa}. Ao limpar salas, o jogador acumula score e tem chance de receber drops na forma de armas ou consum\'iveis. Os ba\'us garantem pelo menos um item por andar, funcionando como ponto de recompensa assegurada que refor\c{c}a o comportamento de explora\c{c}\~ao e limpar salas por completo. Descer para um andar mais profundo introduz tipos novos de inimigos e, ao mesmo tempo, recompensas mais fortes, de modo que o risco e o retorno escalam juntos --- um princ\'ipio cl\'assico de game design conhecido como \textit{risk-reward escalation}, que garante que a dificuldade crescente nunca pare\c{c}a punitiva, pois \'e acompanhada de recompensas proporcionais. O score global alimenta a competi\c{c}\~ao pessoal do jogador consigo mesmo (personal best), que \'e um motivador intrinsecamente poderoso mesmo na aus\^encia de leaderboards online: o jogador n\~ao compete contra outros, mas contra a vers\~ao dele mesmo que jogou a run anterior. Cada nova pontua\c{c}\~ao recorde funciona como prova tang\'ivel de evolu\c{c}\~ao, criando um ciclo positivo de auto-supera\c{c}\~ao.
+
+O segundo eixo \'e a \textbf{convers\~ao de recursos}, que transforma cada item encontrado em uma decis\~ao significativa. Armas encontradas no ch\~ao substituem a arma equipada, o que gera o dilema recorrente de ``abro m\~ao da minha arma r\'apida para pegar essa mais forte, por\'em mais lenta?''. N\~ao existe resposta universalmente correta: a escolha \'otima depende do andar em que o jogador est\'a, dos inimigos que ele espera enfrentar, e de quanto HP lhe resta --- uma arma ranged \'e mais segura quando o jogador est\'a com pouca vida, mas uma melee com dano alto pode limpar salas mais r\'apido e reduzir o tempo de exposi\c{c}\~ao. Como o slot de passivo tamb\'em \'e \'unico, o jogador enfrenta escolhas excludentes a cada item encontrado, e cada troca implica o abandono permanente do item anterior. Os consum\'iveis de cura devem ser guardados para momentos cr\'iticos, pois s\~ao raros, e us\'a-los cedo demais pode significar n\~ao t\^e-los dispon\'iveis quando realmente necess\'ario. E o HP \'e, em \'ultima inst\^ancia, o recurso mais precioso e irrecuper\'avel de todos: na aus\^encia de regenera\c{c}\~ao passiva, cada ponto de vida perdido \'e um passo mais perto do permadeath, e cada po\c{c}\~ao de cura utilizada representa uma decis\~ao com consequ\^encias que se propagam at\'e o final da run. Esse emaranhado de trade-offs interconectados garante que o jogador esteja constantemente avaliando, comparando e decidindo, o que \'e o oposto de um gameplay mec\^anico e autom\'atico.
+
+O terceiro eixo \'e a \textbf{progress\~ao por run}, ilustrada no diagrama a seguir:
+
+\begin{figure}[H]
+  \centering
+  \caption{Diagrama de atividades: Loop Macro (progress\~ao da run)}
+  \label{fig:macroloop}
+  \begin{tikzpicture}[scale=0.88, every node/.style={transform shape}]
+    \node[umlstart] (s) at (-1.5, 0) {};
+
+    \node[umlact, fill=cyanfloor!12, minimum width=2.4cm] (f1) at (1.5, 0)
+      {\begin{tabular}{c}\textbf{Andar 1}\\[-1pt]\scriptsize Aprender\end{tabular}};
+    \node[umlact, fill=yellowfloor!12, minimum width=2.4cm] (f2) at (5, 0)
+      {\begin{tabular}{c}\textbf{Andar 2}\\[-1pt]\scriptsize Testar\end{tabular}};
+    \node[umlact, fill=magentafloor!12, minimum width=2.4cm] (f3) at (8.5, 0)
+      {\begin{tabular}{c}\textbf{Andar 3}\\[-1pt]\scriptsize Cl\'imax\end{tabular}};
+    \node[umlact, fill=magentafloor!20, minimum width=2cm] (boss) at (11.5, 0)
+      {\textbf{Boss}};
+
+    \node[umlend] (victory) at (13.8, 0) {};
+    \node[lbl, below=2pt of victory] {Vit\'oria};
+
+    \node[umlstate, fill=warm!8, font=\footnotesize\bfseries] (go) at (6.5, -2.2) {Game Over};
+
+    \draw[arr] (s) -- (f1);
+    \draw[arr] (f1) -- node[lbl, above] {\scriptsize escada} (f2);
+    \draw[arr] (f2) -- node[lbl, above] {\scriptsize escada} (f3);
+    \draw[arr] (f3) -- (boss);
+    \draw[arr] (boss) -- (victory);
+
+    % Morte possível em qualquer andar
+    \draw[arrdash] (f1.south) -- node[lbl, left] {\scriptsize HP=0} (go);
+    \draw[arrdash] (f2.south) -- (go);
+    \draw[arrdash] (f3.south) -- node[lbl, right] {\scriptsize HP=0} (go);
+
+    % Recomeçar
+    \draw[arr, color=accent!60] (go.west) -| node[lbl, below left] {\scriptsize Tentar Novamente} (f1.south west);
+  \end{tikzpicture}
+\end{figure}
+
+O que mant\'em o jogador voltando, run ap\'os run, \'e a combina\c{c}\~ao espec\'ifica de permadeath com gera\c{c}\~ao procedural --- dois elementos que, isoladamente, poderiam ser frustrantes, mas que juntos criam um ciclo de reten\c{c}\~ao excepcionalmente eficaz. Morrer d\'oi, porque todo o progresso de itens acumulado \'e perdido definitivamente: a arma rara, o passivo que complementava o estilo de jogo, os cora\c{c}\~oes preservados com tanto cuidado, tudo se vai. Por\'em, ao mesmo tempo, a dungeon nunca se repete: cada nova tentativa gera um layout diferente, com combina\c{c}\~oes distintas de inimigos, itens e salas, o que alimenta o pensamento de que ``dessa vez vai ser diferente''. A imprevisibilidade procedural neutraliza a frustra\c{c}\~ao do permadeath ao oferecer novidade constante como contrapartida da perda.
+
+Esse ciclo \'e refor\c{c}ado por um aspecto fundamental que constitui o verdadeiro motor do loop macro: embora o progresso de itens se perca entre runs, o \textbf{aprendizado do jogador n\~ao}. Os padr\~oes de comportamento dos inimigos, os timings ideais para usar o dash, as estrat\'egias de gerenciamento de HP, a avalia\c{c}\~ao de quando trocar de arma e quando manter a atual, a leitura r\'apida de uma sala ao entrar nela --- tudo isso persiste na mente do jogador entre runs como conhecimento t\'acito acumulado. \'E esse mecanismo que gera a sensa\c{c}\~ao real de evolu\c{c}\~ao pessoal, em oposi\c{c}\~ao \`a simples evolu\c{c}\~ao num\'erica de personagem que jogos tradicionais oferecem. Na run~1, o jogador morre no Andar~1 sem entender o que aconteceu; na run~5, j\'a domina os Seekers e morre para os Shooters do Andar~2; na run~15, chega ao boss e descobre seus padr\~oes; na run~30, completa o jogo inteiro e busca a pontua\c{c}\~ao perfeita. Essa curva de dom\'inio, que emerge exclusivamente da repeti\c{c}\~ao e do aprendizado ativo, \'e o que torna roguelikes como Void Descent inerentemente rejog\'aveis: o jogador n\~ao precisa de conte\'udo novo para se sentir progredindo, porque o conte\'udo que muda \'e ele pr\'oprio.
+
+% ══════════════════════════════════════════════════════════════
+\section{Narrativa e Ambienta\c{c}\~ao}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Sinopse}
+
+Sob a superf\'icie do mundo digital existe o \textbf{Void}, um abismo procedural que se reconfigura a cada instante. Ningu\'em sabe quando ele surgiu nem o que o gerou, mas sua expans\~ao corrompe tudo ao redor: dados se desfragmentam, estruturas colapsam, e entidades hostis emergem espontaneamente de padr\~oes corrompidos. Para conter essa expans\~ao, existem os \textbf{Divers}, operadores especializados que descem ao Void com uma \'unica miss\~ao: alcan\c{c}ar o N\'ucleo no fundo do terceiro estrato e destru\'i-lo antes que o Void ultrapasse o ponto de conten\c{c}\~ao e comece a comprometer o mundo externo. O problema \'e que o Void nunca \'e o mesmo duas vezes; cada descida gera um labirinto completamente novo, com amea\c{c}as que evoluem e se reorganizam de formas imprevis\'iveis. A maioria dos Divers que entram n\~ao volta.
+
+\subsection{Personagens}
+
+O \textbf{protagonista} \'e o Diver, um operador representado visualmente por um sprite compacto com silhueta luminosa que emite luz ao redor. O Diver n\~ao fala e n\~ao possui hist\'oria pr\'evia; sua identidade \'e constru\'ida inteiramente pelas armas e passivos que o jogador coleta ao longo da descida. A cada nova run, o Diver entra no Void com equipamento b\'asico e se transforma progressivamente conforme sobrevive e acumula novos itens. Essa abordagem de narrativa silenciosa transfere a constru\c{c}\~ao de significado para o jogador, que projeta suas pr\'oprias motiva\c{c}\~oes sobre o personagem que controla.
+
+O \textbf{antagonista} \'e o N\'ucleo, a entidade central do Void respons\'avel por gerar e sustentar a corrup\c{c}\~ao. Ele se manifesta como uma entidade massiva e pulsante na arena final do Andar~3. O combate contra o N\'ucleo possui duas fases distintas: na primeira, ele dispara proj\'eteis organizados em padr\~oes rotativos que exigem timing preciso de dash; na segunda, ele abandona os proj\'eteis, invoca Seekers como refor\c{c}o para pressionar o jogador e avan\c{c}a diretamente em melee, testando tanto os reflexos quanto o gerenciamento de espa\c{c}o.
+
+\subsection{Cen\'ario}
+
+O Void \'e, visualmente, um espa\c{c}o digital abstrato: fundo preto absoluto, com paredes e estruturas constru\'idas como blocos geom\'etricos coloridos em tons neon. N\~ao h\'a texturas realistas nem cen\'arios org\^anicos; tudo \'e constru\'ido com blocos e sprites sobre escurid\~ao absoluta. Cada andar possui uma paleta de cor predominante que funciona como indicador da profundidade da corrup\c{c}\~ao. O Andar~1 utiliza tons de \textcolor{cyanfloor}{\textbf{ciano}}, representando estruturas relativamente est\'aveis. O Andar~2 faz a transi\c{c}\~ao para \textcolor{yellowfloor!80!black}{\textbf{amarelo e laranja}}, sinalizando instabilidade geom\'etrica crescente. O Andar~3 adota \textcolor{magentafloor}{\textbf{magenta}}, cor associada ao caos e \`a pulsa\c{c}\~ao do N\'ucleo. Essa progress\~ao crom\'atica serve tanto para comunicar visualmente o n\'ivel de perigo ao jogador quanto para criar varia\c{c}\~ao est\'etica entre os andares sem necessidade de assets distintos.
+
+% ══════════════════════════════════════════════════════════════
+\newpage
+\section{Level Design (Esbo\c{c}o)}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Fluxo de Telas}
+
+O fluxo entre telas segue o requisito ``Menu ao Menu'', ou seja, o jogo sempre inicia na Tela de T\'itulo, transita para a gameplay quando o jogador escolhe ``Jogar'', e ap\'os cada run oferece caminhos de volta ao menu principal tanto a partir da Tela de Vit\'oria quanto da Tela de Game Over. Nesta \'ultima, o jogador tamb\'em pode recome\c{c}ar diretamente uma nova run sem passar pelo menu. N\~ao existe nenhum estado do qual o jogador n\~ao consiga voltar ao menu. O diagrama a seguir ilustra todas as transi\c{c}\~oes poss\'iveis entre os estados do jogo.
+
+\begin{figure}[H]
+  \centering
+  \caption{Diagrama de estados: fluxo de telas do jogo}
+  \label{fig:statemachine}
+  \begin{tikzpicture}[scale=0.88, every node/.style={transform shape}]
+    \node[umlstate] (titulo)   at (0, 0)     {Tela de T\'itulo};
+    \node[umlstate] (gameplay) at (0, -2.8)   {Gameplay};
+    \node[umlstate, fill=warm!8] (gameover)  at (-3.5, -5.6) {Game Over};
+    \node[umlstate, fill=accent!10] (vitoria) at (3.5, -5.6)  {Vit\'oria};
+    \node[umlstate] (creditos) at (5, 0)     {Cr\'editos};
+
+    % Início
+    \node[umlstart] (start) at (0, 1.5) {};
+    \draw[arr] (start) -- (titulo);
+
+    % Título → Gameplay
+    \draw[arr] (titulo) -- node[lbl, right] {Jogar} (gameplay);
+
+    % Título → Sair
+    \node[umlend] (sair) at (-4, 0) {};
+    \node[lbl, below=2pt of sair] {Sair};
+    \draw[arr] (titulo) -- node[lbl, above] {Sair} (sair);
+
+    % Gameplay → Game Over / Vitória
+    \draw[arr] (gameplay) -- node[lbl, left] {HP = 0} (gameover);
+    \draw[arr] (gameplay) -- node[lbl, right] {Boss derrotado} (vitoria);
+
+    % Game Over → Gameplay (recomeçar)
+    \draw[arr] (gameover) to[bend left=25] node[lbl, left] {Tentar Novamente} (gameplay);
+
+    % Game Over / Vitória → Título
+    \draw[arr] (gameover.west) -- ++(-1, 0) |- node[lbl, above left, pos=0.25] {Menu} (titulo.west);
+    \draw[arr] (vitoria.east) -- ++(1, 0) |- node[lbl, above right, pos=0.25] {Menu} (titulo.east);
+
+    % Créditos
+    \draw[arr] (titulo) -- node[lbl, above] {Cr\'editos} (creditos);
+    \draw[arr] (creditos) to[bend right=20] node[lbl, below] {Voltar} (titulo);
+  \end{tikzpicture}
+\end{figure}
+
+\subsection{Progress\~ao de Dificuldade}
+
+A progress\~ao de dificuldade foi dividida em tr\^es momentos distintos e crescentes, cada um correspondendo a um andar da dungeon. Essa estrutura garante que o jogo nunca jogue o jogador numa situa\c{c}\~ao para a qual ele n\~ao foi preparado; cada andar introduz novos desafios de forma incremental.
+
+\textbf{1. Apresenta\c{c}\~ao (Andar 1, paleta ciano).} O primeiro andar \'e composto por 5 a 6 salas espa\c{c}osas, incluindo 1 ba\'u. Apenas Seekers est\~ao presentes, que s\~ao inimigos melee lentos cujo \'unico comportamento \'e caminhar na dire\c{c}\~ao do jogador em linha reta. Essa simplicidade \'e proposital e segue o princ\'ipio de design chamado \textit{teaching through play}: em vez de exibir telas de tutorial com texto instrutivo, o jogo coloca o jogador diante de um inimigo cuja amea\c{c}a \'e \'obvia e cuja solu\c{c}\~ao \'e intuitiva --- mover-se para longe e atacar. Ao sobreviver \`as primeiras salas, o jogador internaliza organicamente as mec\^anicas fundamentais de movimenta\c{c}\~ao e combate sem que o jogo jamais tenha pausado para explicit\'a-las. As salas espa\c{c}osas desse andar s\~ao intencionalmente amplas para proporcionar margem de erro generosa: o jogador ainda est\'a aprendendo a navegar e precisa de espa\c{c}o para errar sem ser punido de forma desproporcional. Os drops nesse andar s\~ao generosos, funcionando como recompensa imediata que refor\c{c}a o comportamento de explorar e limpar salas, e que prepara psicologicamente o jogador para o Andar~2, onde a generosidade diminui de forma percept\'ivel.
+
+\textbf{2. Teste (Andar 2, paleta amarela).} O segundo andar cont\'em 6 a 7 salas menores, incluindo 1 ba\'u, e uma quantidade significativamente maior de inimigos por sala. Os Shooters aparecem pela primeira vez aqui, introduzindo proj\'eteis inimigos e for\c{c}ando o jogador a utilizar o dash de forma deliberada para desviar. A introdu\c{c}\~ao dos Shooters \'e o primeiro ponto de inflex\~ao da curva de dificuldade: at\'e aqui, o jogador s\'o precisava se afastar dos Seekers; agora, precisa lidar com amea\c{c}as que o alcan\c{c}am a dist\^ancia, o que exige uma mudan\c{c}a fundamental de postura --- de simplesmente correr para longe, para ativamente esquivar usando os i-frames do dash. As salas menores criam press\~ao espacial adicional, pois h\'a menos espa\c{c}o para manobras evasivas, e a combina\c{c}\~ao de Seekers perseguindo em melee com Shooters disparando de longe for\c{c}a o jogador a priorizar alvos e tomar decis\~oes de posicionamento sob press\~ao. \'E nesse andar que o jogador percebe que precisa de uma arma funcional e de um m\'inimo de estrat\'egia para sobreviver. A maioria das runs tende a terminar no Andar~2, e essa taxa de mortalidade \'e intencional: ela marca a transi\c{c}\~ao entre o tutorial impl\'icito do Andar~1 e o desafio real que o jogo oferece, funcionando como o filtro que separa tentativas explorat\'orias de tentativas competitivas.
+
+\textbf{3. Cl\'imax (Andar 3, paleta magenta).} O terceiro e \'ultimo andar possui apenas 3 salas regulares, incluindo uma sala de ba\'u, seguidas pela arena final do boss. A brevidade desse andar \'e uma escolha de ritmo (\textit{pacing}): ap\'os a extens\~ao e a dificuldade crescente do Andar~2, o Andar~3 acelera deliberadamente em dire\c{c}\~ao ao confronto final, criando um crescendo de tens\~ao em vez de estend\^e-la indefinidamente. Os Bombers s\~ao introduzidos aqui como o \'ultimo tipo de inimigo novo: eles pulsam visualmente como aviso e, ap\'os um delay telegrafado, explodem em \'area, causando dano significativo a tudo ao redor. Sua introdu\c{c}\~ao tardia \'e proposital: o jogador j\'a domina Seekers e Shooters e agora precisa integrar um terceiro tipo de amea\c{c}a ao seu modelo mental de combate, o que eleva a complexidade t\'atica das salas finais. O N\'ucleo, boss final, \'e projetado para testar absolutamente tudo que o jogador aprendeu ao longo da run inteira. Na Fase~1, ele dispara proj\'eteis em padr\~oes rotativos que exigem timing preciso de dash, testando a capacidade de esquiva aprendida no Andar~2; na Fase~2, abandona os proj\'eteis, invoca Seekers como refor\c{c}o para pressionar o jogador e avan\c{c}a diretamente em melee, testando simultaneamente os reflexos, o gerenciamento de espa\c{c}o e a capacidade de priorizar alvos sob press\~ao m\'axima. A transi\c{c}\~ao entre fases \'e abrupta e n\~ao anunciada, o que pune jogadores que se acomodaram a um \'unico padr\~ao e recompensa aqueles que mantiveram a adaptabilidade ao longo de toda a run.
+
+\subsection{Mockup da Tela}
+
+\begin{figure}[H]
+  \centering
+  \caption{Mockup da HUD durante gameplay}
+  \label{fig:hud}
+  \begin{tikzpicture}[scale=0.78, every node/.style={transform shape}]
+    % Tela
+    \draw[sec, thick, rounded corners=4pt] (0,0) rectangle (14, 8.5);
+    \fill[black!95] (0.1, 0.1) rectangle (13.9, 8.4);
+
+    % HUD superior
+    \node[font=\small, text=red!70] at (1.8, 7.8) {$\heartsuit\;\heartsuit\;\heartsuit\;\heartsuit\;\circ$};
+    \node[font=\footnotesize, text=white!80] at (7, 7.8) {ANDAR 2};
+    \node[font=\footnotesize, text=cyanfloor] at (12, 7.8) {SCORE: 4.250};
+    \node[font=\scriptsize, text=yellowfloor] at (12, 7.35) {$\times$3 COMBO};
+
+    % Sala atual (simplificada)
+    \draw[yellowfloor!50, thick] (4, 3.5) rectangle (10, 6.5);
+    \node[font=\tiny, text=yellowfloor!40] at (7, 6.8) {\textit{Sala 4/7}};
+
+    % Corredor
+    \draw[yellowfloor!30] (10, 4.5) -- (11.5, 4.5);
+    \draw[yellowfloor!30] (10, 5.5) -- (11.5, 5.5);
+
+    % Jogador
+    \node[regular polygon, regular polygon sides=6, fill=cyanfloor, minimum size=0.5cm,
+          inner sep=0pt] (player) at (7, 4.8) {};
+    \node[font=\tiny, text=white!60] at (7, 4.2) {\textit{Jogador}};
+
+    % Inimigos
+    \node[regular polygon, regular polygon sides=3, fill=warm, minimum size=0.35cm,
+          inner sep=0pt] at (5.5, 5.5) {};
+    \node[font=\tiny, text=warm!60] at (5.5, 5.1) {\textit{Seeker}};
+
+    \node[rectangle, fill=magentafloor, minimum size=0.3cm,
+          inner sep=0pt] at (8.8, 5.8) {};
+    \node[font=\tiny, text=magentafloor!60] at (8.8, 5.4) {\textit{Shooter}};
+
+    % Projétil
+    \fill[yellowfloor] (8.2, 5.3) circle (1.5pt);
+    \fill[yellowfloor] (8.5, 5.1) circle (1.5pt);
+
+    % HUD inferior
+    \node[font=\footnotesize, text=cyanfloor] at (2.8, 1.2) {L\^amina R\'apida};
+    \node[font=\tiny, text=white!50] at (2.8, 0.7) {DMG: 2 \quad Melee};
+
+    \node[font=\footnotesize, text=accent] at (7, 1.2) {Dash: PRONTO};
+    \draw[accent!40, thick] (5.8, 0.65) rectangle (8.2, 0.85);
+    \fill[accent!60] (5.8, 0.65) rectangle (8.0, 0.85);
+
+    \node[font=\footnotesize, text=green!60] at (11, 1.2) {Po\c{c}\~ao: 1};
+    \node[font=\tiny, text=yellowfloor!70] at (11, 0.7) {Passivo: VEL+};
+  \end{tikzpicture}
+\end{figure}
+
+A HUD foi projetada segundo o princ\'ipio de \textit{glanceability}: toda informa\c{c}\~ao cr\'itica deve ser compreens\'ivel em uma olhada de fra\c{c}\~ao de segundo, sem exigir que o jogador desvie aten\c{c}\~ao do combate para interpret\'a-la. Ela exibe, de forma permanente e simult\^anea, o indicador de vida (cora\c{c}\~oes, posicionados no canto superior esquerdo por serem a informa\c{c}\~ao mais importante), o andar atual (centro superior, como refer\^encia de progress\~ao), o score com multiplicador de combo (canto superior direito, atualizado em tempo real), a arma equipada com seus atributos (inferior esquerdo), o estado do dash com barra de cooldown visual (inferior central), o consum\'ivel dispon\'ivel e o passivo ativo (inferior direito). A distribui\c{c}\~ao dos elementos obedece a uma hierarquia de urg\^encia: informa\c{c}\~oes de sobreviv\^encia (HP, dash) est\~ao nos cantos perif\'ericos onde o olho as capta naturalmente, enquanto informa\c{c}\~oes de performance (score, combo) est\~ao em posi\c{c}\~oes secund\'arias. Todos esses elementos permanecem na tela durante toda a fase, e cada mudan\c{c}a de estado \'e acompanhada por feedback visual imediato: quando o jogador perde vida, um cora\c{c}\~ao desaparece da barra; quando coleta um item, o contador correspondente se atualiza instantaneamente; quando o combo aumenta, o multiplicador pulsa brevemente para chamar aten\c{c}\~ao. Essa transpar\^encia total de informa\c{c}\~ao \'e uma decis\~ao de design consciente e inegoci\'avel: em um jogo com permadeath, onde cada erro pode custar a run inteira, \'e essencial que o jogador tenha acesso constante e inequ\'ivoco ao seu estado atual para tomar decis\~oes informadas a cada segundo.
+
+% ══════════════════════════════════════════════════════════════
+\section{Est\'etica e \'Audio (Dire\c{c}\~ao de Arte)}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Estilo Visual}
+
+O estilo visual de Void Descent pode ser descrito como \textbf{neon procedural}. Todo elemento visual que aparece na tela \'e gerado por c\'odigo: a textura do jogo \'e um atlas gerado algoritmicamente durante a inicializa\c{c}\~ao, onde cada tile (paredes, criaturas, itens) \'e desenhado por fun\c{c}\~oes procedurais em vez de importado de um arquivo de imagem externo. O fundo \'e preto absoluto, e essa escolha n\~ao \'e apenas est\'etica: o preto funciona como tela em branco que maximiza o contraste com os elementos neon que comp\~oem o mundo, fazendo com que at\'e os menores detalhes visuais sejam imediatamente percept\'iveis.
+
+As \textbf{paredes e estruturas} s\~ao renderizadas como blocos 3D com faces coloridas em tons neon sobre fundo preto, e a cor dessas superf\'icies varia de acordo com o andar (ciano no primeiro, amarelo no segundo, magenta no terceiro), criando identidade visual distinta para cada n\'ivel sem necessidade de tilesheets diferentes. O contraste entre as cores vibrantes e o preto do ambiente, combinado com a ilumina\c{c}\~ao por v\'ertice, produz naturalmente uma sensa\c{c}\~ao de brilho neon mesmo sem um shader de glow dedicado. O \textbf{jogador} \'e representado por um sprite de operador com silhueta luminosa que funciona como fonte de luz pontual (iluminando os blocos ao redor), desenhado com propor\c{c}\~oes compactas e facilmente identific\'avel mesmo em situa\c{c}\~oes ca\'oticas com muitas entidades na tela. Cada \textbf{tipo de inimigo} possui um sprite distinto cuja silhueta comunica seu comportamento antes mesmo do jogador interagir com ele: os Seekers s\~ao criaturas lentas com postura de avan\c{c}o (sugerindo persegui\c{c}\~ao implac\'avel), os Shooters s\~ao entidades mais robustas e est\'aticas que telegrafam seus disparos (sugerindo dist\^ancia), e os Bombers s\~ao formas inst\'aveis que pulsam e crescem antes de explodir (sugerindo expans\~ao e \'area de efeito). O boss \'e uma entidade massiva com presen\c{c}a visual dominante, ocupando espa\c{c}o significativo na arena.
+
+Os \textbf{itens} aparecem como \'icones brilhantes no ch\~ao, com a cor indicando o tipo: ciano para armas, verde para itens de cura, amarelo para passivos. Essa codifica\c{c}\~ao crom\'atica permite que o jogador identifique instantaneamente o que encontrou sem precisar parar para ler texto. O sistema de \textbf{part\'iculas}, composto por pequenos sprites neon emitidos em rajada, acompanha cada impacto e cada morte de inimigo, refor\c{c}ando o feedback visual e contribuindo para a sensa\c{c}\~ao de ``juice'' que torna o combate satisfat\'orio.
+
+A \textbf{ilumina\c{c}\~ao} \'e calculada por v\'ertice no shader, com suporte a m\'ultiplas luzes pontuais que atenuam com a dist\^ancia. Cada fonte de luz (proj\'eteis, explos\~oes, o pr\'oprio jogador) contribui para a ilumina\c{c}\~ao local, enquanto as \'areas distantes mergulham progressivamente em escurid\~ao. Esse efeito cumpre dupla fun\c{c}\~ao: esteticamente, cria uma atmosfera tensa e claustrofóbica; mecanicamente, limita a vis\~ao do jogador e for\c{c}a uma postura mais cautelosa ao explorar salas. O pipeline visual inclui \textbf{fog} baseado em profundidade (que dissolve a geometria distante no preto, criando a sensa\c{c}\~ao de abismo infinito) e \textbf{posteriza\c{c}\~ao} de cor no fragment shader (que quantiza os valores RGB em n\'iveis discretos, produzindo uma est\'etica retr\^o e digital coerente com a premissa do Void como espa\c{c}o computacional corrompido).
+
+\subsubsection{Moodboard}
+
+O moodboard a seguir ilustra o territ\'orio visual que Void Descent ocupa. As imagens foram selecionadas para demonstrar os princ\'ipios est\'eticos centrais do projeto: alto contraste neon-sobre-preto, paletas crom\'aticas por zona, ilumina\c{c}\~ao dram\'atica e feedback visual exagerado durante combate. Void Descent se diferencia por gerar todos esses elementos proceduralmente, sem nenhum asset pr\'e-fabricado.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{image.png}
+  \caption{Princ\'ipio de atmosfera: ilumina\c{c}\~ao neon sobre fundo escuro, paleta roxa/ciano, HUD integrada ao cen\'ario. Void Descent aplica esses princ\'ipios com blocos 3D e sprites gerados proceduralmente, sem assets externos.}
+  \label{fig:mood-hades}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{IMG_8733-1024x576.jpeg}
+    \caption{Princ\'ipio de combate: feedback visual intenso com part\'iculas e claridade durante a\c{c}\~ao. Impactos geram contraste contr\'ario ao fundo escuro, efeito que Void Descent reproduz com sprites procedurais e ilumina\c{c}\~ao por v\'ertice.}
+    \label{fig:mood-combat}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{IMG_8731-1024x576.jpeg}
+    \caption{Princ\'ipio de ambienta\c{c}\~ao: paleta ciano/roxa com profundidade atmosf\'erica. Void Descent utiliza transi\c{c}\~ao crom\'atica entre andares para comunicar progress\~ao e perigo crescente.}
+    \label{fig:mood-explore}
+  \end{minipage}
+\end{figure}
+
+\subsection{Sonoplastia}
+
+Assim como a arte, o \'audio de Void Descent \'e 100\% procedural. Todos os sons do jogo s\~ao sintetizados em tempo real atrav\'es da Web Audio API, utilizando uma biblioteca leve de s\'intese sonora que gera tanto efeitos quanto m\'usica a partir de descritores num\'ericos (frequ\^encias, envelopes, formas de onda), sem nenhum arquivo de som pr\'e-gravado. Os buffers de \'audio s\~ao gerados de forma ass\'incrona durante o carregamento do jogo e reproduzidos via \texttt{BufferSource} conectado ao \texttt{AudioContext}. Essa abordagem mant\'em consist\^encia com a filosofia geral do projeto (zero assets externos) e tamb\'em oferece vantagens pr\'aticas, como tamanho de build reduzido e possibilidade de varia\c{c}\~ao param\'etrica dos sons.
+
+A \textbf{m\'usica} consiste em arpeggios synth ambient que mudam de tom conforme o andar em que o jogador se encontra. No Andar~1, os tons s\~ao agudos e limpos, transmitindo uma sensa\c{c}\~ao de relativa seguran\c{c}a; conforme o jogador desce, a trilha se torna progressivamente mais grave, mais tensa e mais dissonante. A trilha do boss \'e especialmente distinta: possui BPM elevado e camadas adicionais de osciladores que se acumulam para criar uma sensa\c{c}\~ao de urg\^encia sonora.
+
+Os \textbf{efeitos sonoros} s\~ao gerados com t\'ecnicas b\'asicas de s\'intese de \'audio. Ataques utilizam sweeps de frequ\^encia ascendentes, impactos utilizam noise bursts curtos, mortes de inimigos utilizam sweeps descendentes, o dash usa filtered noise com envelope r\'apido, e a coleta de itens \'e sinalizada por arpejos ascendentes de tr\^es notas. O resultado geral \'e um estilo sonoro que pode ser descrito como synthwave procedural, coerente com a est\'etica visual neon do jogo inteiro.
+
+% ══════════════════════════════════════════════════════════════
+\newpage
+\section{Planejamento T\'ecnico}
+% ══════════════════════════════════════════════════════════════
+
+\subsection{Equipe}
+
+Void Descent \'e desenvolvido por uma equipe de 4 integrantes: Luis Gustavo Ol\'impio, Lauan Matheus, Jos\'e Melqu\'iades e Jo\~ao Leonardi. A divis\~ao de trabalho contempla game design, programa\c{c}\~ao, arte procedural e \'audio. A proposta de zero assets facilita a coordena\c{c}\~ao da equipe, pois elimina a necessidade de pipelines separados para arte e som: todo o conte\'udo visual e sonoro \'e implementado diretamente em c\'odigo, permitindo que todos os integrantes contribuam no mesmo ambiente de desenvolvimento.
+
+\subsection{Engine e Tecnologia}
+
+\begin{table}[H]
+  \centering
+  \caption{Stack t\'ecnico do projeto}
+  \begin{tabularx}{0.85\textwidth}{l L}
+    \toprule
+    \textbf{Componente} & \textbf{Tecnologia} \\
+    \midrule
+    Engine          & Custom (sem engine comercial) \\
+    Linguagem       & JavaScript vanilla \\
+    Renderiza\c{c}\~ao & WebGL com shaders GLSL para ilumina\c{c}\~ao e efeitos visuais \\
+    Interface (HUD) & Elementos HTML/CSS sobrepostos ao canvas WebGL \\
+    \'Audio          & Web Audio API com biblioteca de s\'intese procedural \\
+    Build           & Concatena\c{c}\~ao de m\'odulos + minifica\c{c}\~ao + Electron para \texttt{.exe} \\
+    Arquitetura     & Escopo global, concatena\c{c}\~ao de arquivos, zero depend\^encias \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+A decis\~ao de construir uma engine custom, em vez de utilizar uma engine comercial como Unity ou Godot, foi tomada deliberadamente. Essa escolha demonstra dom\'inio t\'ecnico completo sobre cada componente do pipeline: renderiza\c{c}\~ao, f\'isica, input e \'audio. O c\'odigo das mec\^anicas principais \'e inteiramente autoral, escrito do zero especificamente para este projeto. O WebGL foi escolhido como API gr\'afica porque fornece acesso direto a shaders GLSL, permitindo a implementa\c{c}\~ao de ilumina\c{c}\~ao por v\'ertice com m\'ultiplas luzes pontuais, fog por profundidade e posteriza\c{c}\~ao de cor, tudo com alta performance e controle total sobre o resultado visual. A arquitetura do c\'odigo segue um modelo de escopo global com concatena\c{c}\~ao de arquivos: cada m\'odulo (renderer, entidades, \'audio, gera\c{c}\~ao de n\'iveis) \'e escrito em um arquivo separado e concatenado num \'unico bundle durante o build, que \'e ent\~ao minificado para redu\c{c}\~ao de tamanho. O Electron \'e utilizado exclusivamente na etapa final de empacotamento, para gerar o execut\'avel \texttt{.exe} exigido para entrega.
+
+\subsection{Arquitetura de Componentes}
+
+\begin{figure}[H]
+  \centering
+  \caption{Diagrama de componentes: arquitetura do sistema}
+  \label{fig:components}
+  \begin{tikzpicture}[scale=0.88, every node/.style={transform shape}]
+    % Core central
+    \node[umlcomp, minimum width=3.2cm, minimum height=1.3cm, fill=sec!10,
+          font=\small\bfseries] (core) at (0, 0) {Game Core};
+
+    % Componentes ao redor
+    \node[umlcomp] (input)   at (-5, 1.5)  {Input Handler};
+    \node[umlcomp] (render)  at (5, 1.5)   {WebGL Renderer};
+    \node[umlcomp] (dungeon) at (-5, -1.5) {Dungeon Gen};
+    \node[umlcomp] (audio)   at (5, -1.5)  {Audio Engine};
+    \node[umlcomp] (hud)     at (0, -3)    {HUD (HTML/CSS)};
+    \node[umlcomp] (postfx)  at (5, 3.5)   {Shader FX};
+
+    % Setas
+    \draw[arr] (input)   -- node[lbl, above] {\scriptsize eventos} (core);
+    \draw[arr] (core)    -- node[lbl, above] {\scriptsize drawcalls} (render);
+    \draw[arr] (core)    -- node[lbl, above] {\scriptsize gerar andar} (dungeon);
+    \draw[arr] (core)    -- node[lbl, above] {\scriptsize tocar SFX} (audio);
+    \draw[arr] (core)    -- node[lbl, right] {\scriptsize dados HUD} (hud);
+    \draw[arr] (render)  -- node[lbl, right] {\scriptsize fog, posterize} (postfx);
+
+    % Estereótipos UML
+    \node[font=\tiny, text=sec!50] at (-5, 2.15) {$\langle\langle$component$\rangle\rangle$};
+    \node[font=\tiny, text=sec!50] at (5, 2.15)  {$\langle\langle$component$\rangle\rangle$};
+    \node[font=\tiny, text=sec!50] at (-5, -0.85) {$\langle\langle$component$\rangle\rangle$};
+    \node[font=\tiny, text=sec!50] at (5, -0.85)  {$\langle\langle$component$\rangle\rangle$};
+    \node[font=\tiny, text=sec!50] at (0, -2.35)  {$\langle\langle$component$\rangle\rangle$};
+    \node[font=\tiny, text=sec!50] at (5, 4.15)   {$\langle\langle$component$\rangle\rangle$};
+  \end{tikzpicture}
+\end{figure}
+
+\subsection{Ferramentas de Apoio}
+
+\begin{table}[H]
+  \centering
+  \caption{Ferramentas utilizadas no desenvolvimento}
+  \begin{tabularx}{0.85\textwidth}{l L}
+    \toprule
+    \textbf{Ferramenta} & \textbf{Uso} \\
+    \midrule
+    VSCode              & Editor de c\'odigo principal \\
+    Chrome DevTools     & Debug, profiling de performance e shaders \\
+    Git / GitHub        & Versionamento e backup do projeto \\
+    Electron Packager   & Gera\c{c}\~ao do execut\'avel \texttt{.exe} \\
+    Nenhum editor de arte & Todo o visual \'e gerado por c\'odigo \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Cronograma Macro}
+
+O desenvolvimento est\'a planejado em 4 semanas, cada uma com entregas espec\'ificas e bem delimitadas. A divis\~ao foi feita de modo que a primeira semana produza um prot\'otipo jog\'avel m\'inimo, e cada semana subsequente adicione camadas de complexidade at\'e atingir o produto final:
+
+\begin{table}[H]
+  \centering
+  \caption{Cronograma de desenvolvimento at\'e a P2}
+  \begin{tabularx}{\textwidth}{c L}
+    \toprule
+    \textbf{Semana} & \textbf{Entregas} \\
+    \midrule
+    1 & Core engine: renderer WebGL com shaders (ilumina\c{c}\~ao, fog), movimenta\c{c}\~ao do jogador, gera\c{c}\~ao de dungeon (room placement), c\^amera top-down, colis\~ao com paredes. \\
+    2 & Gameplay: combate melee e ranged, 3 tipos de inimigo com AI, sistema de vida, dash com i-frames, itens (8 armas + consum\'iveis + passivos), pontua\c{c}\~ao. \\
+    3 & Fluxo completo: Tela de T\'itulo, 3 andares com boss, Game Over, Vit\'oria. HUD funcional. \'Audio synth (SFX + m\'usica). Primeiro build Electron. \\
+    4 & Polimento: part\'iculas, fog, posteriza\c{c}\~ao, ilumina\c{c}\~ao por v\'ertice, feedback visual. Balanceamento de dificuldade. Testes de gameplay. Build final \texttt{.exe}. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Dificuldades T\'ecnicas Previstas}
+
+\begin{enumerate}
+  \item \textbf{Gera\c{c}\~ao de dungeon balanceada.} O algoritmo de room placement, por ser aleat\'orio, pode eventualmente gerar layouts desconectados ou injustos. Para mitigar esse risco, o sistema aplica uma valida\c{c}\~ao p\'os-gera\c{c}\~ao via flood fill, que percorre o mapa e garante que todas as salas sejam alcan\c{c}\'aveis a partir do ponto de spawn. Caso a valida\c{c}\~ao falhe, o andar \'e regenerado.
+  \item \textbf{Performance em situa\c{c}\~oes de pico.} Quando h\'a muitos inimigos, proj\'eteis e part\'iculas ativos simultaneamente, o framerate pode cair. A mitiga\c{c}\~ao planejada envolve o uso de object pooling para reaproveitar entidades j\'a instanciadas, al\'em de um limite m\'aximo de part\'iculas ativas na tela.
+  \item \textbf{Balanceamento de dificuldade.} Roguelikes s\~ao notoriamente dif\'iceis de balancear: se o jogo \'e muito f\'acil, torna-se tedioso; se \'e muito dif\'icil, torna-se frustrante. A estrat\'egia de mitiga\c{c}\~ao \'e centralizar todos os valores num\'ericos (dano, vida, cooldowns) em um arquivo de configura\c{c}\~ao separado, permitindo itera\c{c}\~oes r\'apidas de balanceamento atrav\'es de playtesting.
+  \item \textbf{Empacotamento Electron.} Como esta \'e a primeira vez que a ferramenta ser\'a utilizada no projeto, existe risco de problemas de compatibilidade na gera\c{c}\~ao do \texttt{.exe}. A mitiga\c{c}\~ao \'e testar o processo de build j\'a na Semana~3, de modo que haja tempo para resolver eventuais obst\'aculos antes da entrega final.
+\end{enumerate}
+
+\subsection{Posicionamento no Mercado}
+
+Do ponto de vista de mercado, Void Descent se insere no subg\^enero de roguelikes top-down em tempo real, um espa\c{c}o que inclui t\'itulos amplamente conhecidos como \textit{The Binding of Isaac}, \textit{Enter the Gungeon}, \textit{Hades} e \textit{Nuclear Throne}. Embora esses jogos compartilhem elementos fundamentais com Void Descent (combate em tempo real, gera\c{c}\~ao procedural de n\'iveis, permadeath), a proposta do projeto se diferencia de todos eles em aspectos t\'ecnicos e conceituais espec\'ificos. A tabela a seguir organiza essa compara\c{c}\~ao de forma visual.
+
+\begin{table}[H]
+  \centering
+  \caption{An\'alise competitiva: Void Descent vs. mercado}
+  \footnotesize
+  \begin{tabularx}{0.95\textwidth}{L c c c c c}
+    \toprule
+    \textbf{Caracter\'istica} & \textbf{Isaac} & \textbf{Gungeon} & \textbf{Hades} & \textbf{N.~Throne} & \textbf{Void~D.} \\
+    \midrule
+    100\% procedural (sem assets) & & & & & $\bullet$ \\
+    Engine custom autoral & & & & & $\bullet$ \\
+    Visual neon procedural & & & & & $\bullet$ \\
+    \'Audio sintetizado em tempo real & & & & & $\bullet$ \\
+    Runs curtas ($<$15\,min) & & & & $\bullet$ & $\bullet$ \\
+    Permadeath & $\bullet$ & $\bullet$ & & $\bullet$ & $\bullet$ \\
+    Combate twin-stick & & $\bullet$ & & $\bullet$ & $\bullet$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Como a tabela evidencia, o diferencial central de Void Descent \'e a abordagem \textbf{zero assets}. Toda a experi\^encia, da arte aos mapas, dos inimigos ao som, \'e gerada exclusivamente por algoritmos, sem nenhum recurso externo. Enquanto os t\'itulos estabelecidos listados na tabela dependem de equipes dedicadas de artistas, animadores e designers de som para produzir seus conte\'udos visuais e sonoros, Void Descent demonstra que \'e poss\'ivel produzir uma experi\^encia coesa, coerente e visualmente impactante utilizando exclusivamente c\'odigo. Al\'em de funcionar como jogo, essa proposta tamb\'em serve como prova de conceito t\'ecnica, exibindo dom\'inio pr\'atico sobre WebGL, s\'intese de \'audio procedural e t\'ecnicas de gera\c{c}\~ao algor\'itmica aplicadas a m\'ultiplos dom\'inios simultaneamente.
+
+\end{document}
