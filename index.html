@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>VOID DESCENT</title>
+<style>
+body {
+	margin: 0;
+	background: #000;
+	overflow: hidden;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+#game-wrapper {
+	position: relative;
+	width: min(100vw, calc(100vh * 16 / 9), 960px);
+	aspect-ratio: 16/9;
+}
+#c {
+	width: 100%;
+	height: 100%;
+	image-rendering: optimizeSpeed;
+	image-rendering: pixelated;
+	cursor: crosshair;
+}
+#hud {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	image-rendering: pixelated;
+}
+#a {
+	font-family: monospace;
+	font-weight: bold;
+	color: #c80;
+	position: absolute;
+	top: 4%;
+	left: 2%;
+	font-size: 1.4vw;
+	overflow: hidden;
+	white-space: nowrap;
+	width: 94%;
+	text-shadow: 0 0 7px #f70;
+	transition: opacity 1s;
+}
+#a b {
+	animation: blink 1s infinite;
+}
+@keyframes blink {
+	50% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+	<canvas id="c" width="320" height="180"></canvas>
+	<canvas id="hud" width="320" height="180"></canvas>
+	<code id="a"></code>
+</div>
+
+<script>
+var udef,
+	_math = Math,
+	_document = document,
+	_temp,
+	c = document.getElementById('c'),
+	a = document.getElementById('a');
+</script>
+<script src="src/vd/random.js"></script>
+<script src="src/vd/sonantx.js"></script>
+<script src="src/vd/renderer.js"></script>
+<script src="src/vd/dungeon.js"></script>
+<script src="src/vd/entities.js"></script>
+<script src="src/vd/terminal.js"></script>
+<script src="src/vd/audio.js"></script>
+<script src="src/vd/game.js"></script>
+<script>
+var hud_canvas = document.getElementById('hud');
+var hud_ctx = hud_canvas.getContext('2d');
+
+audio_init(function() {});
+renderer_init();
+bind_input();
+show_menu();
+requestAnimationFrame(game_tick);
+
+document.addEventListener('keydown', function(ev) {
+	if (ev.keyCode === 77) {
+		audio_toggle_mute();
+		ev.preventDefault();
+	}
+});
+</script>
+</body>
+</html>
