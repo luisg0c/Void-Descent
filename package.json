@@ -1,0 +1,42 @@
+{
+  "name": "void-descent",
+  "version": "1.0.0",
+  "description": "Roguelike top-down em JavaScript puro com renderizacao WebGL.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac --x64"
+  },
+  "author": "Luis Gustavo Olimpio, Lauan Matheus, Jose Melquiades, Joao Leonardi",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "br.icev.voiddescent",
+    "productName": "Void Descent",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "src/vd/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "VoidDescent-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "VoidDescent-${version}.${ext}"
+    }
+  }
+}
