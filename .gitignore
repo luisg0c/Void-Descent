@@ -19,3 +19,15 @@ Thumbs.db
 Requisitos*.pdf
 IMG_*.jpeg
 image.png
+GDD_VoidDescent.md
+
+# LaTeX auxiliares
+docs/*.aux
+docs/*.log
+docs/*.toc
+docs/*.lof
+docs/*.out
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.synctex.gz
+docs/chapters/*.aux

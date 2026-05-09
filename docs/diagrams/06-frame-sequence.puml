@@ -1,0 +1,68 @@
+@startuml frame-sequence
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam sequence {
+  ParticipantBackgroundColor #E8F0FE
+  ParticipantBorderColor #2D4A77
+  ArrowColor #2D4A77
+  LifeLineBorderColor #888888
+}
+skinparam defaultFontName "JetBrains Mono"
+skinparam defaultFontSize 11
+
+title Sequencia de um Frame (state = "playing")
+
+participant "requestAnimation\nFrame" as raf
+participant "game_tick" as tick
+participant "renderer" as render
+participant "entities[]" as ents
+participant "spatial_grid" as grid
+participant "hud_ctx (2D)" as hud
+participant "WebGL" as gl
+
+raf -> tick : tick(timestamp)
+
+tick -> tick : compute time_elapsed
+tick -> tick : dispatch por\ngame_state
+
+note over tick : if state != 'playing'\nearly return
+
+tick -> render : renderer_prepare_frame()
+
+== Phase 1 — Update ==
+loop para cada entity em entities[]
+  tick -> ents : entity._update()
+  ents -> ents : aplica vx/vz, friction
+  ents -> ents : _collides(x, z)\nvs walls + room lock
+end
+
+== Phase 2 — Collision via Spatial Grid ==
+tick -> grid : check_collisions_grid()
+grid -> grid : bucketizar por\ncelula de 16 unidades
+loop para cada par e1, e2 em celulas vizinhas
+  alt AABB intersect
+    grid -> ents : e1._check(e2)
+    grid -> ents : e2._check(e1)
+  end
+end
+
+== Phase 3 — Render ==
+loop para cada entity em entities[]
+  tick -> ents : entity._render()
+  ents -> render : push_sprite\n(billboard quad)
+  ents -> render : push_light\n(uniform array)
+end
+
+tick -> render : renderer_end_frame()
+render -> gl : bufferData\ndrawArrays
+
+== HUD overlay ==
+tick -> hud : draw_hud()
+tick -> hud : draw_compass()
+tick -> tick : check_room_lock()
+tick -> tick : count_enemies()
+
+tick -> ents : filter dead\nentities
+
+tick -> raf : requestAnimationFrame(tick)
+@enduml

@@ -1,0 +1,124 @@
+\chapter{Sistema de Entidades}
+\label{ch:entities}
+
+\section{Modelo orientado a objetos}
+
+Toda forma de vida (e morte) no mundo do Void Descent é uma \texttt{entity\_t}, uma
+classe-base ECMAScript 2015 com herança simples. O \textbf{Class Diagram} comunica
+simultaneamente herança, atributos, métodos e relacionamentos.
+
+\diagfiglandscape{diagrams/entities-class.png}{Diagrama de Classes, com a hierarquia de \texttt{entity\_t}}{entities-class}
+
+\section{A classe-base \texttt{entity\_t}}
+
+Todas as entidades compartilham:
+
+\begin{itemize}
+  \item \textbf{Cinemática}: posição (\texttt{x, y, z}), velocidade
+    (\texttt{vx, vy, vz}), aceleração (\texttt{ax, ay, az}) e atrito (\texttt{f}).
+  \item \textbf{Visualização}: \texttt{s} (índice do tile no atlas) e \texttt{\_dead}
+    (\emph{flag} de remoção).
+  \item \textbf{Saúde}: \texttt{h} (\emph{hit points}), inicializado a 5 e
+    sobrescrevível no \texttt{\_init}.
+\end{itemize}
+
+A interface comportamental é definida por seis métodos sobrescrevíveis:
+
+\begin{description}
+  \item[\texttt{\_init(param)}] \emph{Hook} de inicialização chamado pelo construtor.
+    Permite à subclasse personalizar atributos sem reimplementar a cadeia de
+    inicialização.
+  \item[\texttt{\_update()}] Avança a física por \texttt{time\_elapsed} segundos. A
+    implementação base aplica forças, integra a posição e testa colisão com paredes via
+    \texttt{\_collides}.
+  \item[\texttt{\_collides(x, z)}] Checa se a posição alvo está dentro de um tile
+    sólido. Sobrescrito em \texttt{entity\_player\_t} para implementar a barreira do
+    \emph{lock-and-clear}.
+  \item[\texttt{\_check(other)}] Chamado para cada par de entidades cuja AABB se
+    intersecta. Implementa \emph{pickup}, dano por contato, separação entre inimigos,
+    entre outros.
+  \item[\texttt{\_render()}] Emite primitivas para o \emph{renderer}
+    (\texttt{push\_sprite}, \texttt{push\_light}).
+  \item[\texttt{\_kill()}] Marca a entidade como \texttt{\_dead}, agendando sua remoção
+    no fim do \emph{frame}.
+\end{description}
+
+\section{Subclasses de combate}
+
+\subsection{\texttt{entity\_player\_t}}
+
+O jogador é único em vários aspectos:
+
+\begin{itemize}
+  \item Sobrescreve \texttt{\_collides} para impedir saída de salas trancadas.
+  \item Mantém estado de \emph{combo} (\texttt{combo}, \texttt{combo\_timer}) e
+    pontuação.
+  \item Gerencia o \emph{cooldown} do \emph{dash} (\texttt{\_dash\_cooldown},
+    \texttt{\_dashing}) e da arma equipada (\texttt{\_last\_shot}).
+  \item Em \texttt{\_update}, calcula o ângulo de mira a partir da posição do mouse e
+    do \emph{offset} da câmera, e despacha o ataque pelo \texttt{type} da arma
+    (\texttt{melee} ou \texttt{ranged}).
+\end{itemize}
+
+\subsection{Inimigos}
+
+\begin{description}
+  \item[\texttt{entity\_seeker\_t}] (HP 3). Persegue o jogador em linha reta com
+    \emph{retarget} periódico. Comportamento mais simples, introduzido no Andar 1.
+  \item[\texttt{entity\_shooter\_t}] (HP 5). Mantém distância de 24 unidades do
+    jogador, e dispara em cone duas \texttt{entity\_enemy\_plasma\_t} ao detectá-lo.
+    Aparece a partir do Andar 2.
+  \item[\texttt{entity\_bomber\_t}] (HP 2). Persegue agressivamente; ao chegar a 20
+    unidades de distância, ativa um \emph{fuse} de 0,8\,s e explode, causando dano em
+    raio de 28 unidades. Introduzido no Andar 3.
+  \item[\texttt{entity\_boss\_t}] (HP 70). Adversário do Andar 3, com duas fases:
+    \begin{enumerate}
+      \item Fase 1 (HP > 35): atira anéis de 7 plasmas em padrão rotativo.
+      \item Fase 2 (HP $\leq$ 35): abandona o padrão rotativo, avança em \emph{melee}
+        e invoca grupos de 3 \texttt{entity\_seeker\_t}.
+    \end{enumerate}
+\end{description}
+
+\section{Subclasses de projétil e efeito}
+
+\begin{description}
+  \item[\texttt{entity\_plasma\_t}] Projétil do jogador (\emph{ranged}). Move-se em
+    linha reta, hospeda \texttt{\_dmg} configurável pela arma, e é destruído ao colidir
+    com parede ou inimigo.
+  \item[\texttt{entity\_enemy\_plasma\_t}] Versão adversária, que só causa dano ao
+    jogador.
+  \item[\texttt{entity\_explosion\_t}] Efeito visual transitório de 1 segundo, com luz
+    pulsante para \emph{feedback} de impacto.
+  \item[\texttt{entity\_slash\_t}] \emph{Burst} de partículas com \emph{flash} de luz
+    para o golpe \emph{melee}. \emph{Lifetime} curto, de 180\,ms.
+  \item[\texttt{entity\_particle\_t}] Partícula com gravidade e \emph{bounce}, gerada
+    por impactos.
+\end{description}
+
+\section{Subclasses de pickup e cenário}
+
+\begin{description}
+  \item[\texttt{entity\_health\_t}] \emph{Pickup} de poção (curativo de 1 HP). Adiciona
+    ao \emph{slot} de consumível do jogador (capacidade 1). Spawn aleatório, com 50\%
+    de chance por sala regular, ou garantido na sala do baú.
+  \item[\texttt{entity\_weapon\_t}] \emph{Pickup} de arma. Sorteia um índice diferente
+    da arma atualmente equipada e substitui ao toque.
+  \item[\texttt{entity\_staircase\_t}] Escada de descida. Inicialmente inativa
+    (\texttt{\_active = false}), é ativada por \texttt{count\_enemies} quando todos os
+    inimigos da sala estão mortos. Ao ser tocada, dispara \texttt{show\_shop} (em
+    andares não-finais) ou termina o jogo (no último andar).
+\end{description}
+
+\section{Lifecycle e remoção}
+
+A remoção de entidades segue um \textit{deferred deletion} para preservar a
+estabilidade da iteração:
+
+\begin{enumerate}
+  \item \texttt{\_kill()} marca \texttt{\_dead = true} e empurra a referência em
+    \texttt{entities\_to\_kill}.
+  \item Iterações subsequentes do \texttt{\_update}, \texttt{\_check} e
+    \texttt{\_render} no mesmo \emph{frame} testam \texttt{\_dead} e pulam a entidade.
+  \item No fim do \emph{frame}, \texttt{entities = entities.filter(\dots)} reconstrói
+    o \emph{array} sem as entidades marcadas.
+\end{enumerate}

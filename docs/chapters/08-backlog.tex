@@ -1,0 +1,478 @@
+\chapter{Backlog Técnico, Decisões e Aprendizados}
+
+Este capítulo documenta o caminho real do projeto: as decisões que tomamos, as
+ferramentas que escolhemos, o que ficou de fora e o que aprendemos no processo. Nem
+tudo era óbvio no GDD original; algumas escolhas só fizeram sentido ao bater em
+problemas concretos.
+
+\section{Decisões técnicas}
+
+\subsection{JavaScript puro sem \emph{framework}}
+
+Considerações descartadas: Phaser, PixiJS, Three.js. Optamos por JavaScript puro com
+WebGL direto pelos seguintes motivos:
+
+\begin{itemize}
+  \item \textbf{Tamanho do bundle}. Phaser sozinho tem $\sim$1\,MB, e PixiJS tem
+    $\sim$500\,KB. Nosso código fonte completo tem 77\,KB. Um \emph{framework}
+    representaria mais de 90\% do peso, contradizendo a proposta de procedural
+    minimalista.
+  \item \textbf{Aprendizado}. Implementar o \emph{pipeline} de \emph{shaders}, o
+    \emph{tinting} do atlas e a iluminação por vértice à mão deu domínio sobre o que
+    cada parte faz.
+  \item \textbf{Sem cerimônia de \emph{boot}}. \emph{Frameworks} têm \emph{loaders},
+    cenas e sistema de eventos próprio. Para um jogo de tela única e fluxo linear, é
+    \emph{overkill}.
+\end{itemize}
+
+\subsection{Atlas de tiles embarcado em \emph{base64}}
+
+A \texttt{TILES\_B64} em \texttt{game.js} é uma \emph{string} \emph{base64} de
+$\sim$3\,KB, que decodifica para um PNG 1024$\times$16. Considerações descartadas:
+
+\begin{itemize}
+  \item \textbf{PNG externo}. Adicionaria uma dependência de carregamento assíncrono
+    e quebraria o \emph{single-file deploy}. O jogo roda abrindo \texttt{index.html}
+    sem servidor.
+  \item \textbf{Geração 100\% procedural via \emph{shaders}}. Investigamos, mas o
+    custo de tempo de implementação superava o benefício. O atlas pintado à mão é
+    \emph{tile-based} e mantém a estética \emph{neon} desejada.
+\end{itemize}
+
+A escolha pelo atlas embarcado preserva a estética \emph{neon} sem comprometer a
+\emph{distribution story} de \emph{single-page}.
+
+\subsection{Sonant-X em vez de Web Audio API direta}
+
+A Web Audio API permite síntese arbitrária via \texttt{OscillatorNode},
+\texttt{BiquadFilterNode} e outros nós. Implementar oito SFX e uma faixa ambiente
+diretamente sobre essa API resultaria em centenas de linhas de \emph{boilerplate}.
+O Sonant-X é uma biblioteca de $\sim$200 linhas que abstrai oscilador, envelope,
+filtro, LFO e \emph{delay} num único \texttt{instr} declarativo. Encurta o tempo de
+iteração das peças sonoras de horas para minutos.
+
+\subsection{Electron em vez de Tauri ou Neutralino}
+
+O GDD especifica Electron, e a implementação seguiu essa direção. Avaliamos
+alternativas durante o \emph{packaging}:
+
+\begin{tabular}{lrl}
+  \toprule
+  \textbf{Tecnologia} & \textbf{Tamanho .exe} & \textbf{Custo de migração} \\
+  \midrule
+  Electron 32 (escolhido) & 73\,MB & 0 \\
+  Tauri 2 (Rust webview) & $\sim$5--10\,MB & Reescrita do \emph{boot}, Rust toolchain \\
+  Neutralino & $\sim$2\,MB & Reescrita do \emph{boot}, depende de WebView2 \\
+  Native C++ + OpenGL & $<$500\,KB & Reescrita completa \\
+  \bottomrule
+\end{tabular}
+
+A redução de Electron para Neutralino encolheria o \texttt{.exe} em $\sim$35
+vezes, mas o prazo próximo e o risco de \emph{webview} ausente em máquinas antigas
+pesaram contra a migração.
+
+\subsection{\emph{Spatial grid} 32$\times$32 com células de 16}
+
+Decisão tomada após o modo de dificuldade alta elevar a contagem de inimigos para
+$\sim$400 por \emph{run}. O \emph{loop} aninhado $O(n^2)$ original processava
+80.000 pares por \emph{frame}, o suficiente para causar quedas de 60\,Hz para
+$\sim$30\,Hz em telas com muitos inimigos.
+
+A escolha de células de 16 unidades é informada pelo tamanho da AABB da entidade
+(9 unidades). Cada entidade ocupa, no máximo, duas células, e a busca de vizinhos
+em 3$\times$3 captura todas as colisões possíveis. Células menores aumentariam o
+\emph{overhead} de \emph{hashing}; maiores diluiriam o ganho.
+
+\subsection{\emph{Lock-and-clear} via colisão lógica em vez de \emph{tiles} físicos}
+
+A leitura natural do GDD, com a expressão ``portas trancam'', sugeria adicionar
+\emph{tiles} de parede dinamicamente nos corredores ao entrar em sala com
+inimigos. Descartado:
+
+\begin{itemize}
+  \item O \emph{vertex buffer} do WebGL é compilado uma vez no \texttt{load\_level}
+    e permanece estático durante o \emph{gameplay}. Modificar tiles requer
+    recompilar a geometria, custoso.
+  \item Solução adotada: a função \texttt{entity\_player\_t.\_collides} é
+    sobrescrita para checar se a posição alvo está dentro do retângulo da sala
+    atualmente trancada. Sem custo de geometria, sem mudança visual.
+\end{itemize}
+
+A solução tem um \emph{trade-off}: barreiras invisíveis. O efeito é mitigado com
+\emph{feedback} sonoro e visual via \texttt{terminal\_show\_notice}.
+
+\section{Backlog: features descartadas ou postergadas}
+
+\begin{description}
+
+  \item[Tutorial explícito] \emph{Fora de escopo}. O GDD prescreve
+    \emph{teaching through play}. A primeira sala do Andar 1 ensina movimentação
+    contra \texttt{Seekers} sem nenhuma tela de instrução, e a HUD é o único
+    material didático.
+
+  \item[Sistema de \emph{achievements}] \emph{Descartado}. Adicionaria persistência
+    entre \emph{runs}, contradizendo o \emph{permadeath} estrito e exigindo
+    armazenamento local que o GDD evita.
+
+  \item[Multiplayer cooperativo] \emph{Fora de escopo}. Não previsto no GDD.
+
+  \item[Mais de três andares] \emph{Limitado pelo GDD}. A estrutura de três atos
+    (apresentação, teste, clímax) é canônica no documento e foi mantida.
+
+  \item[Validação \emph{flood-fill} do mapa] \emph{Implementado parcialmente}. O
+    GDD prevê uma fase de validação por \emph{flood-fill} para garantir que todas
+    as salas sejam alcançáveis. Na prática, o algoritmo de conexão sequencial entre
+    salas (\texttt{i $\to$ i+1}) já garante alcançabilidade por construção, e a
+    validação se mostrou redundante. Documentado como TODO se geradores futuros
+    forem mais sofisticados, como Voronoi.
+
+  \item[Salvar e carregar \emph{run}] \emph{Explicitamente fora}. \emph{Permadeath}
+    é decisão de design central; persistência quebraria o ciclo.
+
+  \item[Inimigos novos no Andar 3] \emph{Implementado}. \texttt{Bombers} entram
+    apenas no Andar 3, conforme o GDD.
+
+  \item[\emph{Boss} com mais de duas fases] \emph{Considerado, descartado}. Duas
+    fases é o ponto de equilíbrio observado em \emph{playtesting}: pune
+    complacência sem exaurir o jogador. Três fases prolongariam o confronto e
+    diluiriam o impacto.
+
+\end{description}
+
+\section{Ferramentas e \emph{assets}}
+
+\subsection{Estética visual}
+
+\begin{itemize}
+  \item \textbf{Atlas de tiles}: um único PNG 1024$\times$16, embarcado como
+    \emph{base64} em \texttt{game.js}. Os 16 tiles cobrem chão, parede, inimigos,
+    armas, explosões e ícones de UI. Foi o único \emph{asset} pintado à mão.
+  \item \textbf{Paletas por andar}: aplicadas via \emph{hue shift} algorítmico
+    (HSL) sobre o atlas no \texttt{regenerate\_atlas}. Não há atlas separado por
+    andar; todos derivam do mesmo PNG.
+  \item \textbf{Sprites de inimigos}: 4 \emph{frames} para \texttt{seeker}
+    (animação) e sprite estático para \texttt{shooter}, \texttt{bomber} e
+    \texttt{boss}.
+\end{itemize}
+
+\subsection{Áudio}
+
+\begin{itemize}
+  \item \textbf{Sintetizador}: Sonant-X (\emph{port} JavaScript de Sonant Live).
+  \item \textbf{Faixa ambiente}: \emph{drone} em Em, com 16\,s de \emph{loop}
+    perfeito. Iterada cinco vezes até atingir uma textura aceitável; a primeira
+    versão era \emph{rock metal} agressivo, descartado por conflitar com a estética
+    de terminal sci-fi.
+  \item \textbf{SFX}: 8 \emph{patches} (\emph{shoot}, \emph{hit}, \emph{hurt},
+    \emph{beep}, \emph{pickup}, \emph{terminal}, \emph{explode}, \emph{dash}).
+\end{itemize}
+
+\subsection{Cadeia de \emph{tools}}
+
+\begin{itemize}
+  \item \textbf{IDE}: VS Code.
+  \item \textbf{Servidor de desenvolvimento}: \texttt{python3 -m http.server} no
+    \texttt{macOS}, para servir \texttt{index.html} durante iteração.
+  \item \textbf{Empacotamento}: \texttt{electron-builder} 25 com \emph{target}
+    \texttt{portable}.
+  \item \textbf{Documentação}: \LaTeX{} (\texttt{latexmk}) e PlantUML para os
+    diagramas UML. \emph{Pipeline}: \texttt{.puml} $\to$ \texttt{.png} $\to$
+    \texttt{\textbackslash includegraphics} $\to$ PDF final.
+  \item \textbf{Versionamento}: Git e GitHub. Histórico de \emph{commits} no
+    formato \emph{Conventional Commits}.
+\end{itemize}
+
+\section{Aprendizados técnicos}
+
+\subsection{\emph{Race conditions} em \texttt{setTimeout} aninhados}
+
+A morte do jogador agenda \texttt{show\_gameover\_screen} em 1500\,ms, e a morte
+do \emph{boss} agenda \texttt{game\_victory} em 2000\,ms. Se ambas as mortes
+acontecem no mesmo \emph{frame}, os dois \texttt{setTimeout}s ficam pendentes e
+podem disparar em qualquer ordem. Aprendizado: toda transição de estado precisa
+ser \emph{idempotente} ou guardada por \emph{state checks}; não confiar na ordem
+de execução de \texttt{setTimeout}.
+
+\subsection{Coordenadas do \emph{mouse} requerem \texttt{getBoundingClientRect}}
+
+A primeira implementação usava \texttt{ev.clientX / canvas.clientWidth *
+canvas.width}, ignorando o \emph{offset} do \emph{canvas} no \emph{viewport}.
+Funcionava quando o \emph{canvas} ocupava 100\% da janela, mas falhava quando
+havia margens (típico em \emph{flexbox} centralizado). A correção via
+\texttt{canvas.getBoundingClientRect()} foi descoberta empiricamente, depois que
+o jogador precisava apontar para fora da arma para mirar.
+
+\subsection{\texttt{textAlign} do \emph{canvas} 2D persiste entre chamadas}
+
+Bug clássico: setamos \texttt{textAlign = 'right'} para o \texttt{POCAO} e
+esquecemos de resetar para \texttt{'left'} antes de desenhar
+\texttt{DASH: PRONTO}, que renderizava fora da tela. Aprendizado: estados de
+contexto 2D (cor, alinhamento, fonte) são \emph{sticky}; sempre setar
+explicitamente o que cada bloco precisa, ou usar
+\texttt{ctx.save()/restore()}.
+
+\subsection{\emph{Lock-and-clear} precisa de \emph{tracking} explícito por entidade}
+
+Versão ingênua: contar inimigos cuja posição está dentro do retângulo da sala.
+Falha: um \texttt{seeker} perseguindo o jogador pode sair temporariamente da sala
+pelo corredor, e a contagem cai para zero, liberando a sala falsamente. Solução:
+tagar cada inimigo no \emph{spawn} com \texttt{e.\_room\_idx = i} e contar por
+tag, não por posição. Aprendizado: para invariantes de \emph{game state},
+prefira \emph{tags} persistentes a \emph{queries} espaciais.
+
+\subsection{\emph{Loop} de música ambiente exige alinhamento de \emph{samples}}
+
+A primeira versão da música tinha um pequeno \emph{gap} a cada \emph{loop}
+($\sim$0,8\,s) porque o \texttt{songLen} (em segundos) não era múltiplo exato do
+\texttt{rowLen} (em \emph{samples}). Solução: escolher \texttt{rowLen} e o
+número de \emph{patterns} de modo que
+$\mathit{patterns} \times 32 \times \mathit{rowLen} =
+\mathit{songLen} \times 44100$ exatamente. No nosso caso,
+$2 \times 32 \times 11025 = 16 \times 44100 = 705{.}600$ \emph{samples}.
+
+\subsection{Cross-compile macOS para Windows funciona, com ressalvas}
+
+\texttt{electron-builder} cross-compila do \texttt{macOS} para Windows sem Wine
+\emph{somente} se o \emph{target} for \texttt{portable}. Alvos NSIS, MSI ou AppX
+exigem Wine ou execução em VM Windows. Aprendizado: a escolha do \emph{target} é
+tão crítica quanto a do \emph{framework} de empacotamento.
+
+\section{Mudanças de escopo em relação ao GDD}
+
+Durante o desenvolvimento, algumas especificações do GDD foram reinterpretadas,
+estendidas ou explicitamente divergiram. Esta seção lista cada caso, com a
+justificativa.
+
+\subsection{Divergências de \emph{gameplay}}
+
+\subsubsection*{Velocidade dos \texttt{Seekers}}
+
+\textbf{GDD}: ``\texttt{Seekers} são inimigos \emph{melee} lentos cujo único
+comportamento é caminhar na direção do jogador em linha reta.''\\
+\textbf{Implementação}: aceleração de 210 unidades por segundo, agressivos.\\
+\textbf{Razão}: durante o \emph{playtesting}, foi adotado um modo de dificuldade
+alta a pedido explícito da equipe. Manter \texttt{Seekers} lentos nesse modo
+tornaria o Andar 1 trivial. A versão original (lentos) seria adequada para um
+modo ``normal'', mas não foi separada em uma \emph{flag}.
+
+\subsubsection*{Comportamento do \emph{boss} na fase 2}
+
+\textbf{GDD}: ``Na fase 2, ele abandona os projéteis, invoca \texttt{Seekers} como
+reforço para pressionar o jogador e avança diretamente em \emph{melee}.''\\
+\textbf{Implementação}: na fase 2, o \emph{boss} mantém disparos em cone de três
+plasmas a cada 0,45\,s, avança em \emph{melee} \emph{e} invoca grupos de três
+\texttt{Seekers} a cada 1,8\,s.\\
+\textbf{Razão}: o mesmo modo de dificuldade alta exigiu intensificar a fase 2.
+Sem projéteis, a fase 2 ficaria mais fácil que a 1, contra-intuitivo.
+
+\subsubsection*{Densidade de inimigos por sala}
+
+\textbf{GDD}: não especifica número exato; prescreve aumento progressivo entre
+andares.\\
+\textbf{Implementação}: 16 a 21 inimigos por sala no Andar 1, 23 a 28 no Andar 2
+e 30 a 35 no Andar 3 (modo de dificuldade alta).\\
+\textbf{Razão}: a contagem original (2 a 7 por sala) tornava o jogo trivial em
+\emph{playtesting}; o aumento foi calibrado iterativamente.
+
+\subsubsection*{Drops generosos no Andar 1, escassos no Andar 2}
+
+\textbf{GDD}: ``Os drops nesse andar [Andar 1] são generosos. \dots\ no Andar 2,
+a generosidade diminui de forma perceptível.''\\
+\textbf{Implementação}: taxa uniforme de 50\% de chance de poção por sala em
+todos os andares, com poção garantida na sala do baú.\\
+\textbf{Razão}: simplificação do balanço. A diferenciação por andar adicionaria
+complexidade sem ganho proporcional dado o escopo do P2.
+
+\subsubsection*{Sala do \emph{boss} no Andar 3}
+
+\textbf{GDD}: ``[Andar 3] possui apenas 3 salas regulares, incluindo uma sala de
+baú, seguidas pela arena final do \emph{boss}.''\\
+\textbf{Implementação}: 4 salas regulares mais a arena do \emph{boss}, totalizando
+5 salas no Andar 3.\\
+\textbf{Razão}: ajuste empírico durante \emph{playtesting}. Com 3 salas, o Andar
+3 passava rápido demais e a expansão da dificuldade não tinha tempo de se sentir.
+
+\subsection{Divergências de \emph{interface}}
+
+\subsubsection*{Tecla \texttt{E} para interagir}
+
+\textbf{GDD}: ``\texttt{E}: Interagir (coletar item ou usar escada).''\\
+\textbf{Implementação}: \emph{auto-pickup} ao tocar; a escada também ativa ao
+toque.\\
+\textbf{Razão}: decisão consciente de UX. Em \emph{runs} curtas com muitos
+inimigos, a fricção de uma tecla extra para coletar prejudicaria o \emph{flow
+state}. \texttt{E} ficou disponível como \emph{slot} reservado para futuras
+ferramentas de interação, como portas opcionais ou NPCs.
+
+\subsubsection*{Sistema de pontuação}
+
+\textbf{GDD}: $\mathit{score} = \mathit{kills} \times \mathit{combo} +
+\mathit{itens} \times 100$.\\
+\textbf{Implementação}: \texttt{score += base\_score $\times$ combo} a cada
+\emph{kill} (incremental, não baseado em \emph{kills} totais), com bônus de
+$+100$ por \emph{pickup}.\\
+\textbf{Razão}: a fórmula incremental dá \emph{feedback} imediato no HUD a cada
+abate, em vez de calcular ao final. É semanticamente equivalente, pois
+\emph{kills} altos com combo alto produzem score alto. A versão do GDD exigiria
+recálculo a cada \emph{kill} ou ao final, sem benefício de UX.
+
+\subsubsection*{\emph{Slot} de \emph{passivo} dedicado}
+
+\textbf{GDD}: ``1 \emph{slot} de \emph{passivo} \dots\ ocupado por modificadores
+que persistem durante toda a \emph{run} (como velocidade aumentada, dano extra
+ou HP adicional).''\\
+\textbf{Implementação}: o sistema de \emph{shop} entre andares cumpre essa
+função. \texttt{REPARO}, \texttt{OVERCLOCK}, \texttt{AMPLIFIER},
+\texttt{ACELERADOR} e \texttt{CADÊNCIA} são todos modificadores persistentes.\\
+\textbf{Razão}: a estrutura é equivalente ao GDD em termos funcionais, mas
+empacotada como \emph{shop} (escolha ativa entre opções) em vez de \emph{drop}
+aleatório (escolha passiva). \emph{Trade-off}: ganha agência do jogador, perde
+descoberta orgânica.
+
+\subsection{Divergências de \emph{geração}}
+
+\subsubsection*{Validação por \emph{flood-fill}}
+
+\textbf{GDD}: ``Após essa etapa, uma validação por \emph{flood-fill} percorre o
+mapa a partir do ponto de \emph{spawn} do jogador para garantir que todas as
+salas sejam alcançáveis.''\\
+\textbf{Implementação}: validação não implementada; alcançabilidade garantida
+por construção (o algoritmo conecta sala $i$ a $i+1$ sequencialmente).\\
+\textbf{Razão}: redundância. A construção sequencial impede salas isoladas. Se
+o gerador for substituído por algoritmo mais sofisticado (Voronoi, BSP), a
+validação \emph{flood-fill} se torna necessária.
+
+\subsubsection*{Telegrafia de ataques}
+
+\textbf{GDD}: ``Cada inimigo telegrafa seus ataques com um \emph{flash} visual
+antes de efetivamente agir.''\\
+\textbf{Implementação}: \texttt{Bomber} pulsa visualmente durante o \emph{fuse}
+($\sim$0,8\,s); \texttt{Shooter} e \texttt{Seeker} não telegrafam.\\
+\textbf{Razão}: \texttt{Seeker} é \emph{melee} de contato, e a aproximação é a
+própria telegrafia. \texttt{Shooter} dispara projéteis visíveis em arco amplo,
+dando ao jogador 0,5 a 1,0\,s de janela de reação. Telegrafia adicional em
+ambos seria redundante e poluiria a HUD.
+
+\subsection{Adições não previstas no GDD}
+
+\begin{itemize}
+  \item \textbf{Modo de dificuldade alta}: levou a aumentar a contagem de
+    inimigos, a velocidade e a agressividade do \emph{boss}.
+  \item \textbf{Bússola direcional na HUD}: pequeno triângulo apontando para o
+    alvo mais próximo (inimigo, ou escada quando todos estão mortos),
+    adicionado para mitigar a sensação de desorientação em mapas maiores.
+  \item \textbf{\emph{Mute toggle} (tecla \texttt{M})}: não previsto no GDD.
+    Adicionado por boa prática de UX, evita interromper Discord, \emph{streaming}
+    ou apresentação acadêmica.
+  \item \textbf{Indicador de sala atual na HUD} (\texttt{SALA X/Y}): adicionado
+    durante a implementação do \emph{lock-and-clear} para dar \emph{feedback} de
+    progresso dentro do andar.
+  \item \textbf{Tela de pausa explícita}: o GDD lista \texttt{ESC} como pausa nos
+    controles, mas não detalha a UI. Implementamos um \emph{overlay}
+    semi-transparente com o texto ``PAUSADO''.
+\end{itemize}
+
+\section{Cronograma: planejado vs executado}
+
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Marco} & \textbf{Planejado (GDD)} & \textbf{Executado} \\
+  \midrule
+  \emph{Setup} inicial & Semana 1 & 03 a 12 mar \\
+  Sintetizador e RNG & Semana 1 & 12 mar \\
+  \emph{Renderer} WebGL & Semana 2 & 22 mar \\
+  Geração de \emph{dungeon} & Semana 2 & 01 abr \\
+  Sistema de entidades & Semana 3 & 20 abr \\
+  HUD e telas & Semana 4 & 22 a 30 abr \\
+  Polimento (\emph{lock-and-clear}, \emph{spatial grid}) & não planejado & 02 a 05 maio \\
+  \emph{Build} e empacotamento & Semana 4 & 07 a 09 maio \\
+  Documentação & não planejado & 09 maio \\
+  \bottomrule
+\end{tabular}
+
+O atraso na geração da \emph{dungeon} (esperada na semana 2, executada no fim de
+março) refletiu a curva de aprendizado da geração procedural. Compensamos
+comprimindo o sistema de entidades (semana 3 oficial, executado em duas semanas
+e meia).
+
+A fase de polimento (\emph{spatial grid}, \emph{lock-and-clear}, \emph{melee},
+poção, pausa, bússola, ajuste de HUD) não estava no GDD original. Emergiu de
+\emph{playtesting} interno e da decisão de subir a dificuldade para o modo de
+dificuldade alta. Foi a fase com maior densidade de \emph{commits}: cinco em
+quatro dias.
+
+\section{Uso de IA como ferramenta de apoio}
+
+Em pontos específicos do desenvolvimento, a equipe utilizou modelos de linguagem
+como ferramenta auxiliar, da mesma forma que se usa um \emph{linter}, uma
+ferramenta de \emph{static analysis} ou um colega para \emph{rubber duck
+debugging}. As decisões de arquitetura, design, balanceamento e direção criativa
+foram tomadas pela equipe.
+
+Os pontos onde a IA foi consultada são bem delimitados.
+
+\subsection{Abstrações matemáticas pontuais}
+
+\begin{itemize}
+  \item \textbf{Diferença angular normalizada} para o sistema de \emph{melee}: a
+    fórmula $\mathit{diff} = \mathrm{atan2}(\sin(\alpha - \beta),
+    \cos(\alpha - \beta))$ é o truque clássico para encontrar a menor diferença
+    angular sem casos especiais em $\pm\pi$. A IA confirmou a derivação e ajudou
+    a verificar o domínio do resultado.
+  \item \textbf{Conversão HSL$\rightleftharpoons$RGB} para o \emph{tinting} do
+    atlas por andar: a equação envolve interpolação não trivial nos seis
+    sextantes do cone HSL. A IA forneceu a versão canônica para verificação
+    cruzada.
+  \item \textbf{Dimensionamento do \emph{spatial hash grid}}: a justificativa
+    para células de 16 unidades, baseada na relação entre o tamanho da AABB de
+    9 unidades e o custo de \emph{hashing}, foi validada como argumento, não
+    copiada.
+\end{itemize}
+
+\subsection{Pesquisa de bibliotecas e \emph{trade-offs}}
+
+\begin{itemize}
+  \item Comparativo entre Electron, Tauri, Neutralino e C++ nativo, considerando
+    tempos de \emph{build}, tamanho final do executável e custo de migração. A IA
+    acelerou a coleta de dados que precisariam ser pesquisados em múltiplas
+    fontes; a decisão de manter Electron foi da equipe, baseada no prazo e no
+    requisito do GDD.
+  \item Padrões consolidados de \emph{melee combat} em \emph{shooters} top-down
+    (arco de \emph{hitbox} temporário com \emph{timer} curto) e de inventário
+    de \emph{slot} único em \emph{roguelikes}, usados como referência durante o
+    desenho da implementação.
+  \item Estrutura de instrumentos do Sonant-X (parâmetros de envelope, filtro,
+    LFO), consultada para entender qual combinação produz \emph{drone} ambiente
+    em vez de \emph{drum} percussivo.
+\end{itemize}
+
+\subsection{Revisão de código}
+
+A IA foi utilizada como segundo par de olhos para identificar \emph{bugs} sutis
+que \emph{linters} não capturam: \emph{race conditions} entre
+\texttt{setTimeout}s (\emph{gameover} contra \emph{victory}), \emph{state
+leaks} entre transições de tela (teclas \emph{stuck}) e inconsistências de
+\emph{textAlign} no \emph{canvas} 2D que produziam elementos da HUD fora da
+tela. Cada \emph{bug} apontado foi investigado, reproduzido e corrigido
+manualmente.
+
+\subsection{Polimento da documentação}
+
+Esta documentação \LaTeX{} foi redigida pela equipe, com auxílio da IA para
+\emph{boilerplate} de configuração de pacotes, ajuste fino de \emph{layout}
+(helpers \texttt{\textbackslash diagfig} e \texttt{\textbackslash
+diagfiglandscape}) e revisão de estilo. O conteúdo técnico, com decisões de
+arquitetura, descrição de algoritmos, \emph{trade-offs} e divergências em
+relação ao GDD, reflete diretamente as escolhas documentadas no código e nas
+conversas internas da equipe.
+
+\subsection{O que a IA não fez}
+
+Para que não haja ambiguidade: a IA não definiu o conceito do jogo, não desenhou
+o sistema de combate, não escolheu a estética visual, não escreveu o GDD
+original e não decidiu o ritmo dos andares. Esses são produtos do trabalho da
+equipe ao longo das treze semanas de desenvolvimento.
+
+A IA foi usada onde foi mais útil: como acelerador de pesquisa, validador de
+matemática, revisor extra de código e assistente de redação técnica. Nunca como
+substituto do processo de design.

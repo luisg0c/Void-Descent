@@ -1,0 +1,94 @@
+\chapter{Build e Deploy}
+
+\section{Pipeline de empacotamento}
+
+O Void Descent é distribuído como executável \texttt{.exe} portátil para Windows
+x64, empacotado via Electron e \texttt{electron-builder}. Para representar a
+topologia de \emph{nodos} físicos e lógicos, e os \emph{artifacts} que circulam
+entre eles, o tipo de diagrama UML adequado é o \textbf{Deployment Diagram}.
+
+\diagfig{diagrams/deployment.png}{Diagrama de Deployment do \emph{pipeline} de \emph{build} e \emph{runtime}}{deployment}
+
+\section{Comandos de \emph{build}}
+
+\subsection{Desenvolvimento local}
+
+Para rodar a versão de desenvolvimento, com \emph{hot reload} manual via
+\emph{refresh} do Electron:
+
+\begin{verbatim}
+npm install
+npm start
+\end{verbatim}
+
+\subsection{Build do \texttt{.exe} para Windows}
+
+A configuração em \texttt{package.json} define o \emph{target} \texttt{portable},
+um executável auto-extraível sem instalador:
+
+\begin{verbatim}
+npm run build:win
+\end{verbatim}
+
+A saída é \texttt{dist/VoidDescent-1.0.0.exe}, com $\sim$73\,MB. Em paralelo,
+\texttt{electron-builder} produz \texttt{dist/win-unpacked/} (a árvore de arquivos
+antes do empacotamento, útil para \emph{debug}) e arquivos auxiliares
+(\texttt{builder-debug.yml}, \emph{blockmaps}) que são ignorados pelo
+\texttt{.gitignore}.
+
+\section{Cross-compile do macOS}
+
+A geração do \texttt{.exe} para Windows acontece no \emph{host} macOS, sem
+necessidade de Wine ou máquina virtual Windows. O \emph{target} \texttt{portable} é
+uma das poucas configurações que o \texttt{electron-builder} cross-compila
+nativamente; alvos NSIS (instalador) ou MSI exigem Wine no \texttt{PATH}.
+
+\section{Por que 73\,MB?}
+
+A composição aproximada do binário \texttt{.exe} é a seguinte:
+
+\begin{tabular}{lr}
+  \toprule
+  \textbf{Componente} & \textbf{Tamanho} \\
+  \midrule
+  Chromium (V8 e Blink) & $\sim$60\,MB \\
+  Node.js \emph{runtime} & $\sim$10\,MB \\
+  Locales (ICU) & $\sim$5\,MB \\
+  Glue do Electron & $\sim$3\,MB \\
+  Bundle do jogo (\texttt{app.asar}) & $\sim$80\,KB \\
+  \bottomrule
+\end{tabular}
+
+O ``jogo em si'' ocupa $0{,}11\%$ do binário. Os outros $99{,}89\%$ são o
+\emph{runtime} necessário para hospedar uma página WebGL como aplicação
+\emph{desktop}. Esta foi a escolha explícita do GDD; a alternativa seria usar o
+\emph{webview} do sistema (Tauri ou Neutralino reduziriam o tamanho para 2 a
+10\,MB), mas o requisito de portabilidade absoluta e reprodutibilidade pesou na
+decisão por Electron.
+
+\section{Distribuição}
+
+O \texttt{.exe} é \emph{não-assinado}, pois não há certificado de \emph{code
+signing} de desenvolvedor Microsoft. Na primeira execução em Windows 10 ou 11, o
+\emph{SmartScreen} exibe o aviso ``O Windows protegeu seu PC''. A interação
+esperada do usuário é:
+
+\begin{enumerate}
+  \item Clicar em \textit{Mais informações}.
+  \item Clicar em \textit{Executar mesmo assim}.
+\end{enumerate}
+
+Após essa primeira execução, o \emph{hash} do executável é registrado localmente e
+o aviso não reaparece. O modelo é coerente com a distribuição via \emph{releases}
+do GitHub, o canal escolhido para entrega.
+
+\section{Repositório}
+
+O código-fonte e o \texttt{.exe} compilado estão disponíveis em:
+
+\begin{center}
+  \url{https://github.com/luisg0c/Void-Descent}
+\end{center}
+
+A história de \emph{commits} reflete a progressão real do projeto entre 03 de
+março e 09 de maio de 2026, com mensagens em formato \emph{Conventional Commits}.

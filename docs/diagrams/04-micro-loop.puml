@@ -1,0 +1,58 @@
+@startuml micro-loop
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam activity {
+  BackgroundColor #E8F0FE
+  BorderColor #2D4A77
+  FontName "JetBrains Mono"
+}
+
+title Loop Micro — Ciclo de combate por sala (lock-and-clear)
+
+start
+:Entrar na sala;
+:check_room_lock detecta\nposicao do player\nvs room rectangle;
+
+if (sala tem inimigos vivos?) then (sim)
+  :locked_room_idx = i;
+  :Trancar saida\n(player AABB constrained);
+  :terminal_show_notice\n"PORTAS TRANCADAS";
+
+  while (count_enemies_in_room > 0?) is (sim)
+    fork
+      :WASD movimento\n+ aim com mouse;
+    fork again
+      :Atirar (clique)\nou cortar (melee);
+    fork again
+      :Dash (espaco)\n0.2s i-frames;
+    fork again
+      :Q usar pocao\nse h < max;
+    end fork
+
+    if (HP <= 0?) then (sim)
+      :_kill\nsetTimeout(gameover, 1500ms);
+      stop
+    endif
+  endwhile (nao)
+
+  :locked_room_idx = -1;
+  :terminal_show_notice\n"SALA LIBERADA";
+  :audio_play(sfx_pickup);
+endif
+
+if (escada ativa na sala?) then (sim)
+  if (andar < 3?) then (sim)
+    :show_shop;
+    :Selecionar upgrade;
+    :proceed_to_next_level;
+  else (boss)
+    :Combate com Boss;
+    if (boss morto?) then (sim)
+      :setTimeout(game_victory, 2000ms);
+      stop
+    endif
+  endif
+endif
+
+stop
+@enduml

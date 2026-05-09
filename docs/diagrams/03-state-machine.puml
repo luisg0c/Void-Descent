@@ -1,0 +1,46 @@
+@startuml state-machine
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam state {
+  BackgroundColor #E8F0FE
+  BorderColor #2D4A77
+  FontName "JetBrains Mono"
+}
+
+title Maquina de Estados do Jogo — game_state
+
+[*] --> menu : boot do programa
+
+menu --> playing : Enter em JOGAR
+menu --> credits : Enter em CREDITOS
+menu --> quit : Enter em SAIR
+
+credits --> menu : qualquer tecla\n(grace 300ms)
+quit --> menu : qualquer tecla\n(grace 300ms)
+
+state playing {
+  [*] --> exploring
+  exploring --> exploring : WASD, mouse,\nclique, espaco, Q
+}
+
+playing --> paused : ESC
+paused --> playing : ESC
+
+playing --> loading : escada (transicao)
+loading --> playing : load_level done
+loading --> playing : regenerate_atlas\n(async no 1o load)
+
+playing --> shop : staircase\n+ andar < 3
+shop --> loading : compra ou ESC
+
+playing --> gameover : HP <= 0\n(setTimeout 1.5s)
+gameover --> playing : Enter (start_run)
+gameover --> menu : ESC
+
+playing --> victory : boss morto\n(setTimeout 2s)
+victory --> menu : qualquer tecla
+
+note right of paused : tempo congela visualmente,\nentidades nao atualizam
+
+note bottom of shop : roguelite-style:\n3 upgrades de pool de 5,\nremovido apos compra
+@enduml

@@ -1,0 +1,97 @@
+\chapter{Arquitetura de Componentes}
+
+\section{Decomposição modular}
+
+O código está dividido em oito módulos JavaScript, cada um com responsabilidade única e
+bem delimitada. O \textbf{Component Diagram} é o tipo UML adequado para representar a
+divisão de \emph{software} em unidades \emph{deployáveis} e suas dependências de uso.
+
+\diagfiglandscape{diagrams/components.png}{Diagrama de Componentes, com os módulos do Void Descent e suas dependências}{components}
+
+\section{Responsabilidades por módulo}
+
+\begin{description}
+
+  \item[\texttt{src/vd/random.js}] Gerador de números pseudoaleatórios determinístico,
+    baseado em \emph{Linear Congruential Generator} (LCG) de 32 bits. É \emph{seedado}
+    explicitamente a cada andar (\texttt{random\_seed(0xBADC0DE1 + floor\_id)}), o que
+    garante reprodutibilidade do mapa para uma dada combinação de \emph{seed} e andar.
+
+  \item[\texttt{src/vd/sonantx.js}] \emph{Port} JavaScript do sintetizador Sonant.
+    Implementa osciladores (sin, quadrada, dente-de-serra, triangular), envelopes ADSR,
+    filtros (lopass, hipass, bandpass, notch), LFO e \emph{delay}, todos rodando sobre
+    \texttt{Float32Array}.
+
+  \item[\texttt{src/vd/audio.js}] Define os \emph{patches} de instrumentos (oito SFX e a
+    faixa ambiente). Inicializa o \texttt{AudioContext}, cria o \texttt{GainNode} mestre
+    (\texttt{audio\_master\_gain}) que centraliza o controle de \emph{mute}, e coordena
+    a geração assíncrona dos \texttt{AudioBuffer}s no \emph{boot}.
+
+  \item[\texttt{src/vd/renderer.js}] \textit{Pipeline} WebGL. Compila os \emph{shaders}
+    de vértice e fragmento, gerencia o atlas de tiles (\texttt{renderer\_bind\_image}),
+    expõe primitivas de geometria (\texttt{push\_quad}, \texttt{push\_floor},
+    \texttt{push\_block}, \texttt{push\_sprite}) e gerencia até 32 luzes pontuais por
+    \emph{frame}.
+
+  \item[\texttt{src/vd/dungeon.js}] Algoritmo de \emph{room placement} com validação
+    posterior. Posiciona retângulos não sobrepostos, conecta-os por corredores em forma
+    de L, marca tipos especiais (\texttt{start}, \texttt{chest}, \texttt{boss}) e
+    converte o resultado em geometria via chamadas a
+    \texttt{push\_block}/\texttt{push\_floor}.
+
+  \item[\texttt{src/vd/entities.js}] Hierarquia de classes do mundo simulado:
+    classe-base \texttt{entity\_t}, \emph{player}, quatro tipos de inimigos,
+    \emph{boss}, projéteis, partículas, explosões e \emph{pickups}. Detalhada no
+    Capítulo~\ref{ch:entities}.
+
+  \item[\texttt{src/vd/terminal.js}] \emph{Overlay} HUD textual no estilo terminal de
+    boot. Renderiza no elemento DOM \texttt{<code id="a">} (fora do \emph{canvas}) e
+    exibe avisos temporários como ``ANDAR 1 :: ANTECAMARA'' ou ``PORTAS TRANCADAS''.
+
+  \item[\texttt{src/vd/game.js}] Módulo orquestrador. Mantém o \texttt{game\_state}
+    global, implementa o \texttt{game\_tick} (despachado por estado), e gerencia a
+    \emph{shop} de \emph{upgrades}, o \emph{lock-and-clear} de salas, o \emph{spatial
+    grid} de colisão e a HUD principal.
+
+\end{description}
+
+\section{Dependências e fluxo de controle}
+
+A arquitetura segue um padrão estritamente \textbf{em camadas}, sem ciclos:
+
+\begin{enumerate}
+  \item \textbf{Camada de utilitários puros}, sem dependências:
+    \texttt{random.js}, \texttt{sonantx.js}.
+
+  \item \textbf{Camada de infraestrutura}: \texttt{renderer.js}, \texttt{audio.js} (que
+    depende de \texttt{sonantx.js}), \texttt{terminal.js}.
+
+  \item \textbf{Camada de geração}: \texttt{dungeon.js}, que depende de
+    \texttt{random.js} e da API de geometria de \texttt{renderer.js}.
+
+  \item \textbf{Camada de simulação}: \texttt{entities.js}, que depende das três
+    anteriores via globais.
+
+  \item \textbf{Orquestração}: \texttt{game.js}, que depende de tudo.
+\end{enumerate}
+
+A ausência de um sistema de módulos (CommonJS, ESM) é intencional. Todos os símbolos
+vivem no escopo global definido pela ordem de inclusão dos \texttt{<script>} em
+\texttt{index.html}. O padrão minimalista é coerente com a proposta procedural do
+projeto e elimina o custo de \emph{boot} de um \emph{bundler}.
+
+\section{Boot sequence}
+
+A inicialização do programa, definida em \texttt{index.html}, segue uma ordem rígida:
+
+\begin{enumerate}
+  \item \texttt{audio\_init()} cria o \texttt{AudioContext} e dispara a síntese
+    assíncrona da música e dos SFX.
+  \item \texttt{renderer\_init()} cria o contexto WebGL, compila os \emph{shaders} e
+    aloca o \emph{vertex buffer}.
+  \item \texttt{bind\_input()} registra os \emph{handlers} de teclado e mouse no
+    \texttt{document}.
+  \item \texttt{show\_menu()} define \texttt{game\_state = 'menu'} e instala os
+    \emph{handlers} específicos da tela de título.
+  \item \texttt{requestAnimationFrame(game\_tick)} inicia o \emph{loop} principal.
+\end{enumerate}

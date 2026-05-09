@@ -1,0 +1,84 @@
+\chapter{Visão Geral}
+
+\section{O jogo}
+
+\textbf{Void Descent} é um \emph{roguelike} top-down em tempo real construído em
+JavaScript puro com renderização WebGL. Cada partida regenera todo o conteúdo do jogo
+(mapas, atlas de tiles, áudio, comportamento de inimigos) por algoritmos em tempo de
+execução, sem nenhum \emph{asset} pré-fabricado.
+
+A premissa é descer três andares procedurais, \textit{Antecâmara}, \textit{Subsistemas}
+e \textit{Núcleo}, eliminando inimigos sala por sala e coletando armas e
+\textit{upgrades}, até derrotar o boss final. A morte é permanente; cada \emph{run} é
+uma nova execução do gerador.
+
+\section{Equipe}
+
+\begin{itemize}
+  \item Luis Gustavo Olímpio
+  \item Lauan Matheus
+  \item José Melquíades
+  \item João Leonardi
+\end{itemize}
+
+\section{Stack tecnológico}
+
+\begin{itemize}
+  \item \textbf{JavaScript ES6+}, sem \textit{frameworks}, ESLint ou bundlers.
+    Carregamento direto de \texttt{<script>} em ordem.
+  \item \textbf{WebGL 1.0} com \textit{shaders} de vértice e fragmento personalizados, e
+    iluminação por vértice de até 32 luzes pontuais simultâneas.
+  \item \textbf{Sonant-X}, \textit{port} JavaScript do sintetizador Sonant
+    (Marcus Geelnard, Nicolas Vanhoren), gera todo o áudio em tempo de \emph{boot}.
+  \item \textbf{Web Audio API}: \texttt{AudioContext} e \texttt{GainNode} mestre para
+    \textit{routing} unificado e controle de \emph{mute}.
+  \item \textbf{Electron 32} para empacotamento como \texttt{.exe} \textit{portable}
+    Windows x64, via \texttt{electron-builder}.
+\end{itemize}
+
+\section{Métricas do projeto}
+
+\begin{tabular}{lr}
+  \toprule
+  \textbf{Métrica} & \textbf{Valor} \\
+  \midrule
+  Linhas de código (JS+HTML) & $\sim$2.100 \\
+  Tamanho do código fonte & 77 KB \\
+  Quantidade de arquivos JS & 8 \\
+  Tamanho do \texttt{.exe} \textit{portable} & 73 MB \\
+  \quad Chromium embutido & $\sim$60 MB \\
+  \quad Node runtime & $\sim$10 MB \\
+  \quad Bundle do jogo (asar) & $\sim$80 KB \\
+  Tempo médio de \emph{run} & 8 a 12 minutos \\
+  \bottomrule
+\end{tabular}
+
+O contraste entre o código fonte (77 KB) e o \texttt{.exe} final (73 MB) decorre da
+escolha de empacotamento via Electron, conforme especificação do GDD para garantir
+experiência \emph{nativa} de \textit{desktop}. A geração procedural reside na camada do
+\emph{bundle}, não no \emph{wrapper} de distribuição.
+
+\section{Estrutura desta documentação}
+
+A documentação está dividida em nove capítulos, cada um focando uma dimensão ortogonal
+do projeto:
+
+\begin{enumerate}
+  \item \textbf{Visão Geral}, este capítulo.
+  \item \textbf{Arquitetura de Componentes}, com a divisão modular e as dependências
+    (\textit{component diagram}).
+  \item \textbf{Sistema de Entidades}, com a hierarquia de classes do mundo do jogo
+    (\textit{class diagram}).
+  \item \textbf{Máquina de Estados}, com as transições do estado global
+    (\textit{state diagram}).
+  \item \textbf{Game Loop} \textit{micro} (sala-a-sala) e \textit{macro} (run completa),
+    representado por \textit{activity diagrams}.
+  \item \textbf{Sistemas Procedurais}: geração de \emph{dungeon}, síntese de áudio e
+    \textit{tinting} de atlas (\textit{sequence diagrams}).
+  \item \textbf{Build e Deploy}, com o \emph{pipeline} de empacotamento e distribuição
+    (\textit{deployment diagram}).
+  \item \textbf{Backlog Técnico, Decisões e Aprendizados}, com o caminho real do
+    projeto: o que escolhemos, o que descartamos e o que aprendemos.
+  \item \textbf{Considerações Finais}, com o balanço do que foi entregue, o que
+    faríamos diferente e o que vem depois.
+\end{enumerate}

@@ -1,0 +1,108 @@
+\chapter{Sistemas Procedurais}
+
+A premissa fundamental do Void Descent é que \emph{nenhum asset é importado}. Texturas,
+geometria, áudio, comportamento de inimigos e mapas são gerados algoritmicamente a cada
+\emph{run}. Este capítulo descreve os três sistemas procedurais centrais usando
+\textbf{Sequence Diagrams}, que representam interação ordenada entre componentes ao
+longo do tempo, o tipo UML adequado para descrever \emph{processos} multi-etapas.
+
+\section{Geração de \emph{dungeon}}
+
+\diagfig{diagrams/dungeon-gen.png}{Diagrama de Sequência da geração procedural de um andar}{dungeon-gen}
+
+\subsection{Algoritmo de \emph{room placement}}
+
+A função \texttt{dungeon\_generate(floor\_id)} segue cinco etapas:
+
+\begin{enumerate}
+  \item \textbf{Seeding}. \texttt{random\_seed(0xBADC0DE1 + floor\_id)} reinicia o LCG.
+    Andares com mesmo \emph{seed} produzem o mesmo mapa, garantindo determinismo do
+    \emph{layout} dentro de uma \emph{run}. Isso é importante para que
+    \texttt{count\_enemies\_in\_room} identifique consistentemente a mesma sala em
+    \emph{frames} diferentes.
+
+  \item \textbf{Posicionamento de salas}. Em um \emph{loop} com até 500 tentativas,
+    são sorteados retângulos com $w, h \in [7, 11]$ tiles e $x, y$ válidos no mapa
+    $64 \times 64$. Cada candidato é rejeitado se sobrepõe (com \emph{gap} mínimo de
+    1 tile) qualquer sala já aceita. O número alvo é $4 + \mathit{floor\_id}$ salas,
+    exceto no Andar 3, que tem 5.
+
+  \item \textbf{Tipagem}. \texttt{rooms[0]} é a sala inicial; a última é
+    \texttt{chest} (Andar 1 e 2) ou \texttt{boss} (Andar 3). No Andar 3 a segunda
+    sala também é \texttt{chest}, garantindo equipamento antes do confronto final.
+
+  \item \textbf{Carving} dos corredores. Para cada par de salas adjacentes na lista,
+    um corredor em forma de L é escavado conectando os centroides, com escolha
+    aleatória da ordem (horizontal-primeiro ou vertical-primeiro).
+
+  \item \textbf{Construção da geometria}. Cada tile é convertido em chamada a
+    \texttt{push\_floor} (chão) ou \texttt{push\_block} (parede). O resultado é
+    \emph{baked} no \emph{vertex buffer} do WebGL. Não há atualização incremental
+    durante o \emph{gameplay}, o que permite que \texttt{level\_num\_verts} marque
+    o fim da geometria estática.
+\end{enumerate}
+
+\subsection{Validação}
+
+O posicionamento por descarte tem chance teórica de gerar mapas onde uma sala fique
+ilhada. Na prática, com 500 tentativas e o algoritmo de conexão sequencial
+\texttt{i $\to$ i+1}, todas as salas ficam alcançáveis a partir da inicial via grafo
+linear de corredores.
+
+\section{Síntese de áudio}
+
+\diagfig{diagrams/audio-synth.png}{Diagrama de Sequência do \emph{pipeline} de síntese de áudio}{audio-synth}
+
+\subsection{Pipeline}
+
+A \texttt{audio\_init} é assíncrona:
+
+\begin{enumerate}
+  \item Cria o \texttt{AudioContext}, inicialmente \emph{suspended} pela política de
+    \emph{autoplay}, e resumido na primeira interação do usuário.
+  \item Cria \texttt{audio\_master\_gain} (um \texttt{GainNode}) e o conecta ao
+    \texttt{destination}. Todas as fontes posteriores passam por este nó,
+    permitindo \emph{mute} unificado via
+    \texttt{audio\_master\_gain.gain.value = 0}.
+  \item Dispara a síntese assíncrona da música. \texttt{sonantxr\_generate\_song}
+    processa cada \emph{track} em \emph{chunks} de 33\,ms, intercalando com
+    \texttt{setTimeout(0)} para não bloquear a \emph{main thread} excessivamente.
+  \item Em paralelo, dispara a síntese de oito SFX (\emph{shoot}, \emph{hit},
+    \emph{hurt}, \emph{beep}, \emph{pickup}, \emph{terminal}, \emph{explode},
+    \emph{dash}). Cada um é síncrono, mas curto.
+\end{enumerate}
+
+\subsection{Estrutura interna do sintetizador}
+
+Cada nota processada em \texttt{SoundGenerator.\_genSound} executa as seguintes
+etapas, sobre os $\sim$10\,000 \emph{samples} de duração da nota:
+
+\begin{itemize}
+  \item Dois osciladores (\texttt{osc1}, \texttt{osc2}) com formas selecionáveis
+    (\textit{sin}, \textit{square}, \textit{saw}, \textit{tri}) e \emph{detune}
+    aplicável.
+  \item Envelope ADSR (\texttt{attack}, \texttt{sustain}, \texttt{release})
+    calculado por \emph{sample}.
+  \item Filtro biquad de estado configurável (\textit{lopass}, \textit{hipass},
+    \textit{bandpass}, \textit{notch}) com ressonância.
+  \item LFO modulando a frequência do filtro.
+  \item \emph{Pan} e \emph{delay} aplicados em pós-processamento sobre o
+    \texttt{Float32Array} resultante.
+\end{itemize}
+
+A faixa ambiente atual usa um único \emph{track} de \emph{drone} com
+$rowLen = 11025$ e $songLen = 16$\,s, gerando um \emph{loop} sem cortes audíveis.
+
+\section{Atlas de tiles e \emph{tinting}}
+
+O atlas de tiles é embarcado no código como \emph{string} \texttt{base64}
+(\texttt{TILES\_B64} em \texttt{game.js}). No \emph{boot} de cada andar,
+\texttt{tint\_atlas} aplica um \emph{hue shift} ao atlas inteiro pixel-a-pixel,
+produzindo a paleta característica de cada andar: ciano para o Andar 1
+($\Delta H = 0{,}55$), laranja para o Andar 2 ($\Delta H = 0{,}15$) e magenta
+para o Andar 3 ($\Delta H = 0{,}75$). O resultado é uma textura
+$\mathit{tile\_atlas\_size}^2$ vinculada ao GL via \texttt{renderer\_bind\_image}.
+
+A conversão de espaço é \texttt{RGB} $\rightarrow$ \texttt{HSL} $\rightarrow$
+\texttt{shifted HSL} $\rightarrow$ \texttt{RGB}, com saturação amplificada em 40\%
+para preservar o \emph{look} \emph{neon} sobre fundo preto.

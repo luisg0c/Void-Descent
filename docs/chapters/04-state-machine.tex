@@ -1,0 +1,98 @@
+\chapter{Máquina de Estados do Jogo}
+
+\section{O \texttt{game\_state} global}
+
+Uma única variável \texttt{game\_state} controla o comportamento do programa,
+assumindo nove valores discretos. O \texttt{game\_tick} despacha lógica distinta para
+cada estado; transições são disparadas por entrada do usuário, eventos da simulação
+ou \texttt{setTimeout}s explícitos.
+
+O \textbf{State Machine Diagram}, também conhecido como \emph{statechart}, comunica
+simultaneamente os estados, transições e condições de guarda.
+
+\diagfig{diagrams/state-machine.png}{Diagrama de Estados do \texttt{game\_state}}{state-machine}
+
+\section{Catálogo de estados}
+
+\begin{description}
+
+  \item[\texttt{menu}] Tela de título. Exibe três opções (\textsc{JOGAR},
+    \textsc{CRÉDITOS}, \textsc{SAIR}) navegáveis por setas ou WS, com confirmação por
+    Enter ou Espaço. É o estado de entrada após o \emph{boot} e ponto de retorno
+    garantido a partir de qualquer estado terminal.
+
+  \item[\texttt{credits}] Tela de créditos com a equipe e referências de \emph{stack}.
+    Implementa um \emph{grace period} de 300\,ms para ignorar o \emph{keyup} da
+    própria tecla que abriu a tela. Qualquer tecla ou clique após esse intervalo
+    retorna a \texttt{menu}.
+
+  \item[\texttt{quit}] Tela de despedida ``SISTEMA DESLIGADO''. Tenta
+    \texttt{window.close()}, que funciona no contexto Electron e falha silenciosamente
+    no \emph{browser}. O \emph{fallback} para \texttt{menu} acontece via tecla ou
+    clique.
+
+  \item[\texttt{loading}] Estado transitório enquanto \texttt{regenerate\_atlas}
+    aguarda o \texttt{Image} carregar. Acontece apenas no primeiro andar de cada
+    sessão, pois chamadas subsequentes são síncronas com a imagem em cache.
+
+  \item[\texttt{playing}] Estado central. O \texttt{game\_tick} executa as três fases
+    do \emph{frame} (\texttt{update} $\rightarrow$ \texttt{collision} $\rightarrow$
+    \texttt{render}), atualiza a HUD e checa o \emph{lock-and-clear}.
+
+  \item[\texttt{paused}] Pausa por \textsc{ESC}. Sobrescreve os \emph{handlers} de
+    teclado para ignorar tudo exceto novo \textsc{ESC}. O \texttt{game\_tick} faz
+    \emph{early return} sem processar entidades nem renderizar; o \texttt{canvas}
+    mantém o último \emph{frame} desenhado, e o \texttt{hud\_ctx} recebe uma camada
+    semi-transparente com o texto ``PAUSADO''.
+
+  \item[\texttt{shop}] Loja entre andares, ativada quando o jogador toca a escada em
+    um andar não-final. Apresenta três \emph{upgrades} sorteados de um \emph{pool}
+    persistente de cinco. \emph{Upgrades} comprados são removidos do \emph{pool} para
+    o resto da \emph{run}.
+
+  \item[\texttt{gameover}] Tela de derrota. Disparada pelo \texttt{setTimeout} de
+    1500\,ms agendado em \texttt{entity\_player\_t.\_kill}. Suporta dois caminhos:
+    \textsc{Enter} reinicia a \emph{run}, e \textsc{Esc} retorna ao menu.
+
+  \item[\texttt{victory}] Tela de vitória. Disparada pelo \texttt{setTimeout} de
+    2000\,ms em \texttt{entity\_boss\_t.\_kill}. Mostra estatísticas finais (tempo,
+    kills, score, arma) e retorna ao menu por qualquer entrada.
+
+\end{description}
+
+\section{Transições críticas}
+
+\subsection{\emph{Setup} de \emph{handlers} por estado}
+
+Cada estado instala seu próprio conjunto de \emph{handlers}: \texttt{onkeydown},
+\texttt{onkeyup}, \texttt{onmousedown} e \texttt{onmouseup}. A função
+\texttt{bind\_input} restaura os \emph{handlers} de \emph{gameplay} ao entrar em
+\texttt{playing}. Outros estados usam o \texttt{\_bind\_dismiss}, um \emph{helper}
+que adiciona o \emph{grace period} e responde em \texttt{keyup} ou \texttt{mouseup},
+ou implementam \emph{handlers} ad-hoc.
+
+\subsection{Race conditions com \texttt{setTimeout}}
+
+A morte do jogador agenda \texttt{show\_gameover\_screen} em 1500\,ms, e a morte do
+\emph{boss} agenda \texttt{game\_victory} em 2000\,ms. Se as duas mortes acontecerem
+no mesmo \emph{frame} (cenário plausível, em que a explosão final do \emph{boss}
+mata o jogador), os dois \texttt{setTimeout}s ficam pendentes e disparam em janelas
+diferentes. As transições estão protegidas por guardas idempotentes:
+
+\begin{itemize}
+  \item \texttt{show\_gameover\_screen} ignora se \texttt{game\_state} já é
+    \texttt{'gameover'} ou \texttt{'victory'}.
+  \item \texttt{game\_victory} ignora se \texttt{game\_state} já é \texttt{'victory'}.
+\end{itemize}
+
+A vitória, porém, \emph{sobrescreve} a derrota. A interpretação de design é direta:
+se o jogador matou o \emph{boss}, o objetivo foi cumprido, independentemente de uma
+morte contemporânea.
+
+\subsection{Reset de \texttt{keys[]}}
+
+Toda transição que entra em \texttt{playing} (a partir de \texttt{loading},
+\texttt{shop} ou \texttt{gameover}) chama
+\texttt{for (var k in keys) keys[k] = 0;} antes de devolver o controle. A linha evita
+o problema de \emph{stuck keys}, em que uma tecla pressionada durante o estado
+anterior ficaria registrada como ativa quando o jogo retomasse.

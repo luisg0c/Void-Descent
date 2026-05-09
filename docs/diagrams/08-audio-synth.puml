@@ -1,0 +1,51 @@
+@startuml audio-synth
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam sequence {
+  ParticipantBackgroundColor #E8F0FE
+  ParticipantBorderColor #2D4A77
+  ArrowColor #2D4A77
+}
+skinparam defaultFontName "JetBrains Mono"
+skinparam defaultFontSize 11
+
+title Sintese Procedural de Audio — Sequence Diagram
+
+participant audio_init
+participant AudioContext
+participant audio_master_gain
+participant MusicGenerator
+participant SoundGenerator
+collections "AudioBuffers" as bufs
+
+audio_init -> AudioContext : new (suspended)
+audio_init -> audio_master_gain : createGain()\nconnect(destination)
+
+== Musica Ambiente (loop) ==
+audio_init -> MusicGenerator : sonantxr_generate_song(\nmusic_void_descent)
+note right of MusicGenerator : 1 track drone\nrowLen 11025 samples\nendPattern 3, songLen 16s
+
+loop para cada track
+  MusicGenerator -> SoundGenerator : new(instr, rowLen)
+  loop para cada nota nao-zero em pattern
+    SoundGenerator -> SoundGenerator : oscillator (sin/saw/sq/tri)\n+ envelope (attack/sustain/release)\n+ filter (lopass+resonance)\n+ LFO\n+ delay
+  end
+  MusicGenerator -> MusicGenerator : applyDelay(chnBuf)
+  MusicGenerator -> MusicGenerator : mix into mixBuf
+end
+
+MusicGenerator --> bufs : final AudioBuffer
+audio_init -> AudioContext : audio_play(buffer, loop=true)\nvia audio_master_gain
+
+== SFX (one-shots, async) ==
+par sintese paralela
+  audio_init -> SoundGenerator : sound_shoot
+  SoundGenerator --> bufs : sfx_shoot
+also
+  audio_init -> SoundGenerator : sound_hit, hurt, beep,\npickup, terminal, explode, dash
+  SoundGenerator --> bufs : 7 sfx buffers
+end
+
+== Mute toggle ==
+note over audio_master_gain : tecla M\naudio_master_gain.gain.value\n= muted ? 0 : 1
+@enduml

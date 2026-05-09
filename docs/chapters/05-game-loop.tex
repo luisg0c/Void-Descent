@@ -1,0 +1,92 @@
+\chapter{Game Loop}
+
+O \emph{game loop} do Void Descent opera em dois níveis: \textbf{micro} (dentro de uma
+sala, segundo a segundo) e \textbf{macro} (ao longo de uma \emph{run}, minuto a
+minuto). \textbf{Activity Diagrams} representam fluxos com decisões e iteração, e são
+o tipo UML adequado para ambos.
+
+\section{Loop Micro: lock-and-clear}
+
+O \emph{loop} micro é o ciclo \emph{lock-and-clear} clássico de roguelikes. Ao entrar
+em uma sala com inimigos, as ``portas'' trancam, implementadas como restrição lógica
+de movimento do jogador, não como tiles físicos. O combate continua até que todos os
+inimigos \emph{originalmente associados àquela sala} sejam eliminados. A associação é
+feita no \emph{spawn} via \texttt{e.\_room\_idx = i}, evitando o \emph{exploit}
+clássico em que um inimigo escapando para o corredor liberaria a sala falsamente.
+
+A duração típica de um ciclo micro é de 5 a 10 segundos. As ações disponíveis ao
+jogador acontecem em paralelo:
+
+\begin{itemize}
+  \item \textbf{Movimento}: WASD, $\sim$128 unidades por segundo, escalado por
+    \texttt{player\_speed\_mult}.
+  \item \textbf{Ataque}: o clique esquerdo dispara projétil (\emph{ranged}) ou aplica
+    dano em arco (\emph{melee}).
+  \item \textbf{Dash}: \textsc{Espaço} ativa 0,2\,s de invencibilidade com aceleração
+    de 400 unidades por segundo, com \emph{cooldown} de 1,5\,s.
+  \item \textbf{Cura}: \textsc{Q} consome 1 poção e restaura 1 HP, se houver
+    \emph{slot} cheio e o jogador estiver abaixo do HP máximo.
+\end{itemize}
+
+\diagfig{diagrams/micro-loop.png}{Diagrama de Atividade do ciclo de combate por sala}{micro-loop}
+
+\section{Loop Macro: progressão da run}
+
+O \emph{loop} macro segue a curva de dificuldade de três atos prescrita no GDD:
+
+\begin{enumerate}
+  \item \textbf{Andar 1, Antecâmara} (paleta ciano). Apresentação suave: apenas
+    \texttt{Seekers}, salas espaçosas, drops generosos. Ensino implícito da mecânica
+    básica de movimentar-se e atacar.
+
+  \item \textbf{Andar 2, Subsistemas} (paleta amarela). Introdução dos
+    \texttt{Shooters}. Pela primeira vez, o jogador precisa usar o \emph{dash}
+    ofensivamente para desviar de projéteis. A complexidade tática aumenta, sem
+    mudança fundamental nas ferramentas.
+
+  \item \textbf{Andar 3, Núcleo} (paleta magenta). Clímax: \texttt{Bombers}
+    introduzidos, arena curta, culminando no boss em duas fases. A brevidade é
+    proposital, pois após a extensão do Andar 2 o ritmo acelera deliberadamente em
+    direção ao confronto final.
+\end{enumerate}
+
+Entre andares (após Andar 1 e Andar 2), o jogador acessa a \emph{shop} de
+\emph{upgrades}. O \emph{pool} de cinco \emph{upgrades} se esvazia ao longo da
+\emph{run}; combinado ao \emph{permadeath}, isso produz escolhas únicas que não se
+repetem.
+
+\diagfig{diagrams/macro-loop.png}{Diagrama de Atividade da progressão completa da \emph{run}}{macro-loop}
+
+\section{Sequência interna de um \emph{frame}}
+
+A função \texttt{game\_tick}, invocada por \texttt{requestAnimationFrame} a
+$\sim$60\,Hz, executa três fases estritamente ordenadas:
+
+\begin{enumerate}
+  \item \textbf{Update}: para cada entidade viva, \texttt{\_update} atualiza posição e
+    estado interno. A colisão com paredes acontece dentro de \texttt{\_update}, via
+    \texttt{\_collides}. Esta fase é puramente local, sem interação entre entidades.
+
+  \item \textbf{Collision}: \texttt{check\_collisions\_grid} executa o \emph{broad
+    phase} via \emph{spatial hash}. Cada entidade é \emph{bucketizada} numa célula de
+    16$\times$16 unidades. Para cada par de entidades em células vizinhas (3$\times$3
+    \emph{neighborhood}), o teste AABB é executado e, em caso de interseção,
+    \texttt{e1.\_check(e2)} e \texttt{e2.\_check(e1)} são invocados. A deduplicação de
+    pares é feita por um campo temporário \texttt{\_gid}, atribuído pelo índice no
+    \emph{array} durante a construção do \emph{grid}.
+
+  \item \textbf{Render}: cada entidade emite suas primitivas via \texttt{push\_sprite}
+    e \texttt{push\_light}. Após o \emph{loop}, \texttt{renderer\_end\_frame} executa
+    o \emph{draw call} único do WebGL.
+\end{enumerate}
+
+A separação em fases foi introduzida durante a refatoração do \emph{spatial grid}. O
+modelo anterior, um \emph{loop} aninhado $O(n^2)$ que intercalava \texttt{\_update},
+\texttt{\_check} e \texttt{\_render} em cada iteração, não escalava para os
+$\sim$400 inimigos por \emph{run} do modo de dificuldade alta.
+
+Após as três fases, a HUD é desenhada no \texttt{hud\_ctx} (\emph{canvas} 2D
+separado), \texttt{check\_room\_lock} verifica transições de sala, e o
+\emph{deferred deletion} remove as entidades marcadas mortas.
+
+\diagfig{diagrams/frame-sequence.png}{Diagrama de Sequência da execução interna de \texttt{game\_tick} no estado \texttt{playing}}{frame-sequence}

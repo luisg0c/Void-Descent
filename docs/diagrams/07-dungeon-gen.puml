@@ -1,0 +1,68 @@
+@startuml dungeon-gen
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam sequence {
+  ParticipantBackgroundColor #E8F0FE
+  ParticipantBorderColor #2D4A77
+  ArrowColor #2D4A77
+}
+skinparam defaultFontName "JetBrains Mono"
+skinparam defaultFontSize 11
+
+title Geracao Procedural de Dungeon — Sequence Diagram
+
+participant load_level
+participant random_seed
+participant dungeon_generate
+collections "rooms[]" as rooms
+collections "level_data\n(64x64 Uint8)" as data
+participant push_block
+participant push_floor
+
+load_level -> random_seed : 0xBADC0DE1 + floor_id\n(determinismo por andar)
+load_level -> dungeon_generate : floor_id
+
+== Room Placement ==
+loop ate ter num_rooms ou max_attempts (500)
+  dungeon_generate -> dungeon_generate : sortear (x, y, w, h)\nw, h ∈ [7, 11]
+  alt sobrepoe outra sala (com gap minimo)?
+    dungeon_generate -> dungeon_generate : descartar
+  else
+    dungeon_generate -> rooms : push room
+  end
+end
+
+== Tipagem ==
+dungeon_generate -> rooms : rooms[0].type = 'start'
+alt floor_id == 3
+  dungeon_generate -> rooms : last.type = 'boss'
+  dungeon_generate -> rooms : rooms[1].type = 'chest'
+else
+  dungeon_generate -> rooms : last.type = 'chest'
+end
+
+== Carving ==
+loop para cada par adjacente (i, i+1)
+  dungeon_generate -> data : carve corredor L-shape\nentre centroides
+end
+
+loop para cada sala
+  dungeon_generate -> data : preencher chao\n(tile aleatorio)
+end
+
+== Walls adjacentes ==
+loop para cada tile vazio adjacente a chao
+  dungeon_generate -> data : marcar como parede
+end
+
+== Construcao da geometria ==
+loop para cada tile (64x64)
+  alt tile e parede
+    dungeon_generate -> push_block : posicao + tile
+  else tile e chao
+    dungeon_generate -> push_floor : posicao + tile
+  end
+end
+
+dungeon_generate --> load_level : return rooms[]
+@enduml

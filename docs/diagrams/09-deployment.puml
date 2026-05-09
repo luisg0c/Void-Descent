@@ -1,0 +1,57 @@
+@startuml deployment
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam node {
+  BackgroundColor #E8F0FE
+  BorderColor #2D4A77
+  FontName "JetBrains Mono"
+}
+skinparam artifact {
+  BackgroundColor #FFF7E6
+  BorderColor #B58900
+}
+
+title Deployment — Build Pipeline e Runtime
+
+node "Maquina de desenvolvimento\n(macOS Darwin 25.4 / Apple Silicon)" as dev {
+  artifact "src/vd/*.js\n(8 arquivos, 74KB)" as src
+  artifact "index.html\n(3KB)" as html
+  artifact "main.js\n(electron entry)" as main
+  artifact "package.json" as pkg
+  component "Node.js 24\n+ npm 11" as node
+  component "electron 32\n+ electron-builder 25" as builder
+}
+
+node "Build pipeline (cross-compile)" as build {
+  artifact "Electron host runtime\n(macOS download)" as eruntime
+  artifact "win-unpacked/\n(Chromium + Node + game)" as unpacked
+  artifact "VoidDescent-1.0.0.exe\n(73MB portable)" as exe
+}
+
+node "Maquina do usuario\n(Windows 10/11 x64)" as user {
+  artifact "VoidDescent.exe\n(executavel portavel)" as runtime
+  component "Chromium\nembutido" as chromium
+  component "Game bundle\n(asar archive)" as gamebundle
+  component "WebGL + Web Audio\nAPI" as webapi
+}
+
+src --> builder : empacotar
+html --> builder
+main --> builder
+pkg --> builder
+node --> builder
+
+builder --> eruntime : baixar
+eruntime --> unpacked : copiar + customizar
+unpacked --> exe : 7z self-extract\n(portable)
+
+exe ..> runtime : usuario\nexecuta
+
+runtime --> chromium : carrega
+chromium --> gamebundle : carrega index.html
+gamebundle --> webapi : usa para render + audio
+
+note bottom of exe : ~73MB porque empacota Chromium.\nO bundle do jogo em si (asar) tem ~80KB.\nNeutralino/Tauri reduziriam pra ~2-10MB,\nmas o GDD especificou Electron.
+
+note right of user : Win SmartScreen avisa\nporque .exe e nao-assinado.\nClicar "Mais info" -> "Executar mesmo assim".
+@enduml

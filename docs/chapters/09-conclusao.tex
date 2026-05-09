@@ -1,0 +1,103 @@
+\chapter{Considerações Finais}
+
+Void Descent começou com uma proposta ambiciosa: construir um \emph{roguelike} top-down
+procedural completo em JavaScript puro, sem \emph{frameworks}, sem \emph{assets}
+externos e empacotado como executável \emph{desktop}. Treze semanas depois, o resultado
+é um \texttt{.exe} de 73\,MB que carrega 77\,KB de código, gera mapas, áudio e
+comportamentos novos a cada \emph{run}, e cumpre todos os critérios de aceite definidos
+no documento de requisitos.
+
+\section{O que foi entregue}
+
+O escopo executado contempla:
+
+\begin{itemize}
+  \item Os oito módulos JavaScript da arquitetura, com responsabilidades isoladas e
+    sem dependências circulares.
+  \item Treze classes de entidade derivadas de \texttt{entity\_t}, cobrindo jogador,
+    quatro tipos de inimigos, \emph{boss} de duas fases, projéteis, partículas e
+    \emph{pickups}.
+  \item Nove estados de jogo (\texttt{menu}, \texttt{credits}, \texttt{quit},
+    \texttt{loading}, \texttt{playing}, \texttt{paused}, \texttt{shop},
+    \texttt{gameover} e \texttt{victory}), todos com transições idempotentes e
+    \emph{handlers} de entrada apropriados.
+  \item Três andares com paletas distintas (ciano, amarelo, magenta), curva de
+    dificuldade crescente e \emph{boss} no Andar 3.
+  \item \emph{Lock-and-clear} de salas, \emph{spatial grid} para colisão, sistema de
+    \emph{shop} com cinco \emph{upgrades} persistentes, oito armas (quatro
+    \emph{ranged}, quatro \emph{melee}) e \emph{slot} de consumível.
+  \item HUD funcional com vida em corações, andar, sala atual, score e combo, arma
+    equipada e seu tipo, \emph{dash}, poção, contagem de inimigos, bússola direcional
+    e indicador de \emph{mute}.
+  \item Empacotamento Electron \emph{portable} para Windows x64, com cross-compile do
+    macOS, distribuído via GitHub.
+\end{itemize}
+
+\section{O que aprendemos}
+
+A lição mais valiosa do projeto foi que a maior parte do tempo de desenvolvimento não
+está nas funcionalidades de fachada (telas, menus, HUD), mas nos detalhes invisíveis
+que separam um \emph{prototype} de um produto. \emph{Race conditions} de
+\texttt{setTimeout}, \emph{stuck keys} entre transições, \emph{textAlign} esquecido,
+inimigos escapando de salas trancadas. Cada um desses \emph{bugs} parece pequeno
+isoladamente, mas o efeito acumulado é a diferença entre algo que ``funciona'' e algo
+que se sente bem de jogar.
+
+A segunda lição foi sobre \emph{trade-offs} de empacotamento. Empacotar uma página
+HTML como aplicação \emph{desktop} via Electron custa 73\,MB. Tauri ou Neutralino
+custariam menos, mas com risco de incompatibilidade em máquinas antigas. C++ nativo
+custaria menos ainda, mas exigiria reescrever tudo. Não há resposta universal: a
+escolha certa depende do prazo, do público alvo e dos requisitos do GDD. No nosso
+caso, manter Electron foi a decisão correta.
+
+\section{O que faríamos diferente}
+
+Em retrospecto, três pontos teriam reduzido o esforço total:
+
+\begin{enumerate}
+  \item \textbf{Spatial grid desde o início}, não como refatoração tardia. O
+    \emph{loop} aninhado $O(n^2)$ funcionou enquanto havia poucos inimigos, mas o
+    refator tardio tomou um dia inteiro de trabalho que poderia ter sido evitado.
+
+  \item \textbf{Pause e \emph{lock-and-clear} planejados como parte da arquitetura}.
+    Ambos foram adicionados depois e exigiram retoques em múltiplos arquivos. Tê-los
+    desde o desenho inicial dos estados teria simplificado o código.
+
+  \item \textbf{Documentação progressiva}, em vez de concentrada no fim. Esta
+    documentação foi escrita em uma única semana ao final do projeto, e isso exigiu
+    reconstruir o raciocínio retrospectivamente para várias decisões. Uma página de
+    \emph{decision log} mantida ao longo do desenvolvimento teria capturado o porquê
+    de cada escolha no momento em que foi feita.
+\end{enumerate}
+
+\section{O que vem depois}
+
+Há um conjunto claro de melhorias que ficariam para um eventual P3 ou para uma versão
+pós-disciplina:
+
+\begin{itemize}
+  \item Modos de dificuldade selecionáveis no menu. O modo de dificuldade alta
+    está \emph{hardcoded} hoje; expor uma \emph{flag} permitiria oferecer um modo
+    ``normal'' alinhado com o GDD original.
+  \item Telegrafia visual completa para \texttt{Seekers} e \texttt{Shooters}. Hoje
+    apenas \texttt{Bombers} pulsam antes de explodir.
+  \item Validação \emph{flood-fill} do gerador de \emph{dungeons}. Necessária se o
+    algoritmo de placement for substituído por algo mais sofisticado.
+  \item Migração para Neutralino, reduzindo o \texttt{.exe} para $\sim$2\,MB. Exige
+    apenas máquinas com WebView2, instalado por padrão em Windows 10 e 11
+    atualizados.
+  \item Tabela de \emph{high scores} local, mantida em \texttt{localStorage}.
+    Reforçaria o \emph{loop} macro de competição contra o próprio histórico, sem
+    quebrar o \emph{permadeath}.
+\end{itemize}
+
+\section{Encerramento}
+
+O Void Descent existe porque quatro pessoas concordaram em entregar um jogo procedural
+completo em treze semanas, e seguraram esse compromisso até o fim. O documento de
+requisitos foi atendido; o GDD interno foi atendido com divergências documentadas; o
+código está versionado em repositório público; o executável compila e roda.
+
+Mais importante, ao final do processo, o jogo é divertido de jogar. Esse era o
+critério verdadeiro, o que nenhum documento técnico consegue medir mas que define se
+o projeto valeu a pena. Nossa avaliação interna é que valeu.

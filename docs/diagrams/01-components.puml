@@ -1,0 +1,51 @@
+@startuml components
+skinparam componentStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+skinparam defaultFontName "JetBrains Mono"
+skinparam defaultFontSize 12
+
+title Arquitetura de Componentes — Void Descent
+
+package "index.html (boot)" as html {
+  [audio_init]
+  [renderer_init]
+  [bind_input]
+  [show_menu]
+  [requestAnimationFrame]
+}
+
+package "src/vd" {
+  [random.js] as rand
+  [sonantx.js] as synth
+  [audio.js] as audio
+  [renderer.js] as render
+  [dungeon.js] as dungeon
+  [entities.js] as entities
+  [terminal.js] as terminal
+  [game.js] as game
+}
+
+audio --> synth : gera buffers via\nsonantxr_generate_song
+audio --> rand : seed sfx
+
+dungeon --> rand : random_int\n(seedado por andar)
+dungeon ..> render : push_block\npush_floor
+
+entities ..> rand : drops aleatorios
+entities ..> render : push_sprite\npush_light
+entities ..> audio : audio_play (sfx)
+entities ..> dungeon : level_data\nrooms[]
+
+game --> dungeon : dungeon_generate
+game --> entities : entity_player\nentities[]
+game --> render : prepare_frame\nend_frame
+game --> audio : audio_play\naudio_toggle_mute
+game --> terminal : show_notice
+game --> rand : random_seed\npor andar
+
+html --> game : game_tick
+html --> render : renderer_init
+html --> audio : audio_init
+html --> terminal : terminal_show
+@enduml

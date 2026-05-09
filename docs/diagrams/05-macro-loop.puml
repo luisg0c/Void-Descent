@@ -1,0 +1,44 @@
+@startuml macro-loop
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam activity {
+  BackgroundColor #E8F0FE
+  BorderColor #2D4A77
+  FontName "JetBrains Mono"
+}
+
+title Loop Macro — Progressao da run (3 andares + boss)
+
+start
+:Tela de Titulo;
+:Iniciar Run\n(_reset_run);
+
+partition "Andar 1 — Antecamara (paleta ciano)" {
+  :Apresentacao\nApenas Seekers (lentos, melee);
+  :4 salas + sala de bau;
+  :Limpar todas as salas;
+  :Loja: 3 upgrades aleatorios\nde pool de 5 (gasta score);
+}
+
+partition "Andar 2 — Subsistemas (paleta amarela)" {
+  :Teste\nSeekers + Shooters (ranged);
+  :5 salas + sala de bau;
+  :Limpar todas as salas;
+  :Loja (segunda visita,\npool reduzido em 1);
+}
+
+partition "Andar 3 — Nucleo (paleta magenta)" {
+  :Climax\nSeekers + Shooters + Bombers;
+  :3 salas regulares + arena do boss;
+  :Combate com o Nucleo;
+  if (boss derrotado?) then (sim)
+    :Tela de Vitoria\n(score, kills, tempo);
+  else (HP=0)
+    :Tela de Game Over;
+    detach
+  endif
+}
+
+:Voltar ao Menu Principal;
+stop
+@enduml

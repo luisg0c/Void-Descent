@@ -1,0 +1,136 @@
+@startuml entities-class
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam classFontName "JetBrains Mono"
+skinparam defaultFontSize 11
+
+title Hierarquia de Entidades — Class Diagram
+
+abstract class entity_t {
+  +x, y, z : number
+  +vx, vy, vz : number
+  +ax, ay, az : number
+  +f : friction
+  +s : sprite
+  +h : HP
+  +_dead : boolean
+  --
+  +_init(param)
+  +_update()
+  +_collides(x, z) : bool
+  +_check(other)
+  +_render()
+  +_receive_damage(from, amt)
+  +_kill()
+  +_spawn_particles(amt)
+}
+
+class entity_player_t {
+  +score, kills : number
+  +combo, combo_timer
+  +_dash_cooldown
+  +_last_shot
+  +_last_damage
+  --
+  +_collides() <<override>>
+  +_update() <<aim, shoot, dash>>
+  +_kill() <<game over>>
+  +_add_kill_score(base)
+}
+
+class entity_seeker_t {
+  +_target_x, _target_z
+  +_retarget
+  --
+  +_update() <<chase>>
+}
+
+class entity_shooter_t {
+  +_retarget
+  --
+  +_update() <<shoot plasma>>
+}
+
+class entity_bomber_t {
+  +_fuse
+  --
+  +_update() <<approach + arm>>
+  +_explode() <<aoe>>
+}
+
+class entity_boss_t {
+  +_phase : 1 | 2
+  +_attack_timer
+  +_spawn_timer
+  +_room_idx
+  --
+  +_update() <<2 fases>>
+  +_kill() <<victory>>
+}
+
+class entity_plasma_t {
+  +_dmg
+  --
+  +_check(enemy) <<dano>>
+}
+
+class entity_enemy_plasma_t {
+  --
+  +_check(player) <<dano>>
+}
+
+class entity_explosion_t {
+  +_lifetime
+}
+
+class entity_slash_t {
+  +_angle, _lifetime
+}
+
+class entity_particle_t {
+  +_lifetime
+}
+
+class entity_health_t {
+  +_anim
+  --
+  +_check(player) <<+pocao>>
+}
+
+class entity_weapon_t {
+  +_weapon_id
+  +_anim
+  --
+  +_check(player) <<troca arma>>
+}
+
+class entity_staircase_t {
+  +_active : bool
+  +_anim
+  --
+  +activate()
+  +_check(player) <<abre loja>>
+}
+
+entity_t <|-- entity_player_t
+entity_t <|-- entity_seeker_t
+entity_t <|-- entity_shooter_t
+entity_t <|-- entity_bomber_t
+entity_t <|-- entity_boss_t
+entity_t <|-- entity_plasma_t
+entity_t <|-- entity_enemy_plasma_t
+entity_t <|-- entity_explosion_t
+entity_t <|-- entity_slash_t
+entity_t <|-- entity_particle_t
+entity_t <|-- entity_health_t
+entity_t <|-- entity_weapon_t
+entity_t <|-- entity_staircase_t
+
+entity_boss_t ..> entity_seeker_t : invoca (fase 2)
+entity_boss_t ..> entity_enemy_plasma_t : dispara
+entity_shooter_t ..> entity_enemy_plasma_t : dispara
+entity_bomber_t ..> entity_explosion_t : ao explodir
+entity_player_t ..> entity_plasma_t : ranged
+entity_player_t ..> entity_slash_t : melee
+@enduml
