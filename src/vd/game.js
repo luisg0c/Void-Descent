@@ -214,7 +214,7 @@ function load_level(id) {
 			new entity_health_t((room.cx + 1) * 8, 0, room.cy * 8, 5, 31);
 		}
 
-		var qtd = 16 + id * 7 + random_int(0, 5);
+		var qtd = 6 + id * 4 + random_int(0, 3);
 		for (var j = 0; j < qtd; j++) {
 			var ex = (room.x + random_int(1, room.w - 2)) * 8;
 			var ez = (room.y + random_int(1, room.h - 2)) * 8;

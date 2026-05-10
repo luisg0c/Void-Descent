@@ -202,7 +202,7 @@ class entity_player_t extends entity_t {
 		if (this._last_damage < 0 && this._dashing <= 0) {
 			audio_play(audio_sfx_hurt);
 			super._receive_damage(from, amount);
-			this._last_damage = 1;
+			this._last_damage = 1.2;
 			this.combo = 1;
 			this.combo_timer = 0;
 			camera_shake = 2;
@@ -237,14 +237,14 @@ class entity_seeker_t extends entity_t {
 			dist = _math.sqrt(xd * xd + zd * zd);
 
 		t._retarget -= time_elapsed;
-		if (t._retarget < 0 && dist < 96) {
-			t._retarget = _math.random() * 0.25 + 0.15;
+		if (t._retarget < 0 && dist < 80) {
+			t._retarget = _math.random() * 0.4 + 0.25;
 			t._target_x = entity_player.x;
 			t._target_z = entity_player.z;
 		}
 
-		t.ax = _math.abs(txd) > 2 ? (txd > 0 ? -210 : 210) : 0;
-		t.az = _math.abs(tzd) > 2 ? (tzd > 0 ? -210 : 210) : 0;
+		t.ax = _math.abs(txd) > 2 ? (txd > 0 ? -160 : 160) : 0;
+		t.az = _math.abs(tzd) > 2 ? (tzd > 0 ? -160 : 160) : 0;
 
 		super._update();
 		this._anim += time_elapsed;
@@ -300,21 +300,20 @@ class entity_shooter_t extends entity_t {
 		t._retarget -= time_elapsed;
 
 		if (t._retarget < 0) {
-			if (dist < 80) {
-				t._retarget = _math.random() * 0.3 + 0.2;
+			if (dist < 64) {
+				t._retarget = _math.random() * 0.5 + 0.4;
 				t._target_x = entity_player.x;
 				t._target_z = entity_player.z;
 			}
-			if (dist < 64) {
+			if (dist < 56) {
 				var ang = _math.atan2(entity_player.z - this.z, entity_player.x - this.x);
-				new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33, ang + _math.random() * 0.18 - 0.09);
-				new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33, ang + _math.random() * 0.18 - 0.09 + 0.25);
+				new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33, ang + _math.random() * 0.2 - 0.1);
 			}
 		}
 
 		if (dist > 24) {
-			t.ax = _math.abs(txd) > 2 ? (txd > 0 ? -72 : 72) : 0;
-			t.az = _math.abs(tzd) > 2 ? (tzd > 0 ? -72 : 72) : 0;
+			t.ax = _math.abs(txd) > 2 ? (txd > 0 ? -56 : 56) : 0;
+			t.az = _math.abs(tzd) > 2 ? (tzd > 0 ? -56 : 56) : 0;
 		} else {
 			t.ax = t.az = 0;
 		}
@@ -353,11 +352,11 @@ class entity_bomber_t extends entity_t {
 			dist = _math.sqrt(xd * xd + zd * zd);
 
 		if (t._fuse < 0) {
-			if (dist < 96) {
-				t.ax = xd > 0 ? -130 : 130;
-				t.az = zd > 0 ? -130 : 130;
+			if (dist < 80) {
+				t.ax = xd > 0 ? -100 : 100;
+				t.az = zd > 0 ? -100 : 100;
 			}
-			if (dist < 20) t._fuse = 0.8;
+			if (dist < 18) t._fuse = 1.1;
 		} else {
 			t._fuse -= time_elapsed;
 			t.ax = t.az = 0;
@@ -382,7 +381,7 @@ class entity_bomber_t extends entity_t {
 		var xd = this.x - entity_player.x,
 			zd = this.z - entity_player.z,
 			dist = _math.sqrt(xd * xd + zd * zd);
-		if (dist < 28) entity_player._receive_damage(this, 1);
+		if (dist < 24) entity_player._receive_damage(this, 1);
 		this._spawn_particles(15);
 		new entity_explosion_t(this.x, 0, this.z, 0, 26);
 		camera_shake = 4;
@@ -415,7 +414,7 @@ class entity_bomber_t extends entity_t {
 // nucleo - boss do andar 3
 class entity_boss_t extends entity_t {
 	_init() {
-		this.h = 70;
+		this.h = 50;
 		this._phase = 1;
 		this._attack_timer = 0;
 		this._anim = 0;
@@ -430,40 +429,37 @@ class entity_boss_t extends entity_t {
 		t._anim += time_elapsed;
 		t._attack_timer -= time_elapsed;
 
-		if (t.h <= 35 && t._phase === 1) {
+		if (t.h <= 25 && t._phase === 1) {
 			t._phase = 2;
 			camera_shake = 8;
 		}
 
 		if (t._phase === 1) {
 			if (t._attack_timer <= 0) {
-				t._attack_timer = 0.22;
+				t._attack_timer = 0.35;
 				var base_angle = t._anim * 2;
-				for (var i = 0; i < 7; i++) {
+				for (var i = 0; i < 5; i++) {
 					new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33,
-						base_angle + (i / 7) * _math.PI * 2);
+						base_angle + (i / 5) * _math.PI * 2);
 				}
 			}
-			t.ax = _math.abs(xd) > 4 ? (xd > 0 ? -30 : 30) : 0;
-			t.az = _math.abs(zd) > 4 ? (zd > 0 ? -30 : 30) : 0;
+			t.ax = _math.abs(xd) > 4 ? (xd > 0 ? -25 : 25) : 0;
+			t.az = _math.abs(zd) > 4 ? (zd > 0 ? -25 : 25) : 0;
 		} else {
 			t._spawn_timer -= time_elapsed;
 			if (t._spawn_timer <= 0) {
-				t._spawn_timer = 1.8;
+				t._spawn_timer = 3.0;
 				var s1 = new entity_seeker_t(t.x + 16, 0, t.z, 5, 27);
 				var s2 = new entity_seeker_t(t.x - 16, 0, t.z, 5, 27);
-				var s3 = new entity_seeker_t(t.x, 0, t.z + 16, 5, 27);
-				s1._room_idx = s2._room_idx = s3._room_idx = t._room_idx;
+				s1._room_idx = s2._room_idx = t._room_idx;
 			}
-			t.ax = xd > 0 ? -130 : 130;
-			t.az = zd > 0 ? -130 : 130;
+			t.ax = xd > 0 ? -100 : 100;
+			t.az = zd > 0 ? -100 : 100;
 
 			if (t._attack_timer <= 0) {
-				t._attack_timer = 0.45;
+				t._attack_timer = 0.7;
 				var ang = _math.atan2(entity_player.z - t.z, entity_player.x - t.x);
 				new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33, ang);
-				new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33, ang + 0.3);
-				new entity_enemy_plasma_t(t.x, 0, t.z, 0, 33, ang - 0.3);
 			}
 		}
 
@@ -538,8 +534,8 @@ class entity_plasma_t extends entity_t {
 
 class entity_enemy_plasma_t extends entity_t {
 	_init(angle) {
-		this.vx = _math.cos(angle) * 100;
-		this.vz = _math.sin(angle) * 100;
+		this.vx = _math.cos(angle) * 75;
+		this.vz = _math.sin(angle) * 75;
 	}
 
 	_render() {
