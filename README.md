@@ -6,17 +6,26 @@ iCEV — Introdução ao Desenvolvimento de Jogos — 2026.1
 
 ---
 
+## ▶ Download da build
+
+**[⬇ Baixar VoidDescent-1.0.0.exe (73 MB)](https://github.com/luisg0c/Void-Descent/releases/download/v1.0.0/VoidDescent-1.0.0.exe)**
+
+Executável portátil para Windows x64. Sem instalação. Na primeira execução, o Windows SmartScreen vai exibir "O Windows protegeu seu PC" — clicar em **Mais informações → Executar mesmo assim**.
+
+Também disponível em [Releases](https://github.com/luisg0c/Void-Descent/releases/tag/v1.0.0) (com SHA-256 para verificação) e como cópia no repositório em [`dist/VoidDescent-1.0.0.exe`](dist/VoidDescent-1.0.0.exe).
+
+---
+
 ## Para avaliação
 
 Três artefatos cobrem toda a entrega:
 
-1. **Executável Windows**: [`dist/VoidDescent-1.0.0.exe`](dist/VoidDescent-1.0.0.exe) (73 MB, portátil, x64).
-   Na primeira execução, o Windows SmartScreen vai exibir o aviso "O Windows protegeu seu PC". Clicar em **Mais informações → Executar mesmo assim**.
+1. **Executável Windows**: link acima ou em [Releases](https://github.com/luisg0c/Void-Descent/releases/tag/v1.0.0).
 
 2. **Game Design Document**: [`docs/GDD_VoidDescent.pdf`](docs/GDD_VoidDescent.pdf).
-   Conceito, mecânicas, game loop micro/macro, narrativa, level design, estética, planejamento técnico.
+   Conceito, mecânicas, game loop micro/macro, narrativa, level design, estética, planejamento técnico, histórico de revisões.
 
-3. **Documentação técnica**: [`docs/main.pdf`](docs/main.pdf) (35 páginas).
+3. **Documentação técnica**: [`docs/main.pdf`](docs/main.pdf) (37 páginas).
    Arquitetura, diagramas UML (component, class, state, activity, sequence, deployment), decisões técnicas, aprendizados, mudanças de escopo em relação ao GDD, considerações finais.
 
 ## Equipe
