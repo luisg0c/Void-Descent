@@ -259,18 +259,19 @@ modo ``normal'', mas não foi separada em uma \emph{flag}.
 
 \textbf{GDD}: ``Na fase 2, ele abandona os projéteis, invoca \texttt{Seekers} como
 reforço para pressionar o jogador e avança diretamente em \emph{melee}.''\\
-\textbf{Implementação}: na fase 2, o \emph{boss} mantém disparos em cone de três
-plasmas a cada 0,45\,s, avança em \emph{melee} \emph{e} invoca grupos de três
-\texttt{Seekers} a cada 1,8\,s.\\
-\textbf{Razão}: o mesmo modo de dificuldade alta exigiu intensificar a fase 2.
-Sem projéteis, a fase 2 ficaria mais fácil que a 1, contra-intuitivo.
+\textbf{Implementação}: na fase 2, o \emph{boss} mantém um disparo de plasma único
+a cada 0,7\,s, avança em \emph{melee} e invoca pares de \texttt{Seekers} a cada
+3,0\,s.\\
+\textbf{Razão}: sem qualquer projétil, a fase 2 ficaria mais fácil que a fase 1,
+contra-intuitivo. Mantemos um disparo unitário para preservar a pressão
+sem saturar a arena.
 
 \subsubsection*{Densidade de inimigos por sala}
 
 \textbf{GDD}: não especifica número exato; prescreve aumento progressivo entre
 andares.\\
-\textbf{Implementação}: 16 a 21 inimigos por sala no Andar 1, 23 a 28 no Andar 2
-e 30 a 35 no Andar 3 (modo de dificuldade alta).\\
+\textbf{Implementação}: 10 a 13 inimigos por sala no Andar 1, 14 a 17 no Andar 2
+e 18 a 21 no Andar 3.\\
 \textbf{Razão}: a contagem original (2 a 7 por sala) tornava o jogo trivial em
 \emph{playtesting}; o aumento foi calibrado iterativamente.
 

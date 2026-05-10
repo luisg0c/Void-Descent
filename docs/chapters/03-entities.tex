@@ -68,14 +68,15 @@ O jogador é único em vários aspectos:
   \item[\texttt{entity\_shooter\_t}] (HP 5). Mantém distância de 24 unidades do
     jogador, e dispara em cone duas \texttt{entity\_enemy\_plasma\_t} ao detectá-lo.
     Aparece a partir do Andar 2.
-  \item[\texttt{entity\_bomber\_t}] (HP 2). Persegue agressivamente; ao chegar a 20
-    unidades de distância, ativa um \emph{fuse} de 0,8\,s e explode, causando dano em
-    raio de 28 unidades. Introduzido no Andar 3.
-  \item[\texttt{entity\_boss\_t}] (HP 70). Adversário do Andar 3, com duas fases:
+  \item[\texttt{entity\_bomber\_t}] (HP 2). Persegue agressivamente; ao chegar a 18
+    unidades de distância, ativa um \emph{fuse} de 1,1\,s e explode, causando dano em
+    raio de 24 unidades. Introduzido no Andar 3.
+  \item[\texttt{entity\_boss\_t}] (HP 50). Adversário do Andar 3, com duas fases:
     \begin{enumerate}
-      \item Fase 1 (HP > 35): atira anéis de 7 plasmas em padrão rotativo.
-      \item Fase 2 (HP $\leq$ 35): abandona o padrão rotativo, avança em \emph{melee}
-        e invoca grupos de 3 \texttt{entity\_seeker\_t}.
+      \item Fase 1 (HP > 25): atira anéis de 5 plasmas em padrão rotativo a cada 0,35\,s.
+      \item Fase 2 (HP $\leq$ 25): avança em \emph{melee}, invoca pares de
+        \texttt{entity\_seeker\_t} a cada 3,0\,s e dispara plasmas individuais a cada
+        0,7\,s.
     \end{enumerate}
 \end{description}
 
