@@ -1,63 +1,23 @@
 # VOID DESCENT
 
-> Roguelike top-down em tempo real onde cada morte recria o labirinto. Desça três andares de um abismo procedural, colete armas e destrua o Núcleo antes que o Void te consuma.
+> Roguelike top-down em tempo real com geração 100% procedural. JavaScript puro com renderização WebGL, empacotado como `.exe` portátil via Electron.
 
-Projeto da disciplina **Introdução ao Desenvolvimento de Jogos** — iCEV / 2026.1.
+iCEV — Introdução ao Desenvolvimento de Jogos — 2026.1
 
-## Pitch técnico
+---
 
-Tudo o que você vê e ouve é gerado por algoritmo em tempo de execução. Não há texturas desenhadas à mão, sprites importados, nem áudio gravado. O atlas de tiles é pintado em tempo de boot, a música nasce de um synth Sonant-X minimalista, os mapas saem de um gerador de salas com flood-fill, e os efeitos sonoros são sintetizados nota por nota.
+## Para avaliação
 
-Resultado: **o jogo todo (HTML + JS) pesa ~77KB**. O peso final do executável (~73MB) vem inteiramente do Electron, que empacota o Chromium para distribuir como `.exe` nativo, conforme exigido pelo GDD.
+Três artefatos cobrem toda a entrega:
 
-## Como jogar
+1. **Executável Windows**: [`dist/VoidDescent-1.0.0.exe`](dist/VoidDescent-1.0.0.exe) (73 MB, portátil, x64).
+   Na primeira execução, o Windows SmartScreen vai exibir o aviso "O Windows protegeu seu PC". Clicar em **Mais informações → Executar mesmo assim**.
 
-| Tecla | Ação |
-|-------|------|
-| **W A S D** | Movimento |
-| **Mouse** | Mira |
-| **Clique esquerdo** | Atirar (ranged) ou cortar (melee) |
-| **Espaço** | Dash com 0,2s de invencibilidade |
-| **Q** | Usar poção de cura |
-| **M** | Mute / unmute |
-| **ESC** | Pausar / abrir menu |
+2. **Game Design Document**: [`GDD_VoidDescent.pdf`](GDD_VoidDescent.pdf).
+   Conceito, mecânicas, game loop micro/macro, narrativa, level design, estética, planejamento técnico.
 
-Mate todos os inimigos da sala para destrancar as portas. Encontre a escada para descer. A cada andar, escolha um upgrade na loja gastando o score acumulado.
-
-## Build e execução
-
-```bash
-# Rodar localmente em modo dev
-npm install
-npm start
-
-# Gerar .exe para Windows (cross-compile aceita rodar no macOS)
-npm run build:win
-# saída: dist/VoidDescent-1.0.0.exe (~73MB, portable, sem instalador)
-```
-
-O `.exe` é não-assinado. O Windows SmartScreen vai exibir um aviso na primeira execução; clique em **"Mais informações" → "Executar mesmo assim"**.
-
-## Stack
-
-- **JavaScript puro** (sem frameworks)
-- **WebGL** para renderização 3D com vertex lighting
-- **Sonant-X** para síntese de áudio
-- **Electron 32** para empacotamento
-
-## Arquitetura
-
-```
-src/vd/
-├── random.js     RNG determinístico (LCG seedado por andar)
-├── sonantx.js    Engine de síntese de áudio
-├── audio.js      SFX + música ambiente procedurais
-├── renderer.js   Pipeline WebGL (shaders, atlas tinting, lights)
-├── dungeon.js    Gerador procedural de salas e corredores
-├── entities.js   Sistema de entidades (player, 4 inimigos, boss, projeteis)
-├── terminal.js   HUD textual estilo terminal
-└── game.js       Loop principal, state machine, HUD, shop, lock-and-clear
-```
+3. **Documentação técnica**: [`docs/main.pdf`](docs/main.pdf) (35 páginas).
+   Arquitetura, diagramas UML (component, class, state, activity, sequence, deployment), decisões técnicas, aprendizados, mudanças de escopo em relação ao GDD, considerações finais.
 
 ## Equipe
 
@@ -65,3 +25,63 @@ src/vd/
 - Lauan Matheus
 - José Melquíades
 - João Leonardi
+
+## Pitch técnico
+
+Texturas, geometria, mapas, áudio e comportamento de inimigos são gerados por algoritmo em tempo de execução. Não há nenhum asset importado. O código fonte completo ocupa 77 KB; o `.exe` pesa 73 MB porque empacota o Chromium do Electron, conforme especificado no GDD.
+
+## Controles
+
+| Tecla | Ação |
+|-------|------|
+| W A S D | Movimento |
+| Mouse | Mira |
+| Clique esquerdo | Atacar (ranged ou melee, conforme arma equipada) |
+| Espaço | Dash com 0,2 s de invencibilidade, cooldown 1,5 s |
+| Q | Usar poção do slot de consumível |
+| M | Mute / unmute |
+| ESC | Pausar e retomar |
+
+Mate todos os inimigos da sala para destrancar as portas. Encontre a escada para descer. Escolha um upgrade na loja entre andares.
+
+## Build a partir do código fonte
+
+Pré-requisitos: Node.js 24+ e npm 11+.
+
+```bash
+npm install
+npm start                 # roda em modo de desenvolvimento via Electron
+npm run build:win         # gera dist/VoidDescent-1.0.0.exe (cross-compile macOS para Windows funciona)
+```
+
+## Estrutura do repositório
+
+```
+/
+├── README.md                                este arquivo
+├── GDD_VoidDescent.pdf, GDD_VoidDescent.tex  game design document
+├── index.html                                entry point HTML
+├── main.js                                   entry point Electron
+├── package.json, package-lock.json           dependências e config de build
+│
+├── src/vd/                                   código fonte do jogo (8 arquivos JS)
+│   ├── random.js, sonantx.js                 RNG determinístico e sintetizador
+│   ├── renderer.js                           pipeline WebGL com tinting de atlas
+│   ├── dungeon.js                            gerador procedural de salas e corredores
+│   ├── audio.js, terminal.js                 áudio sintetizado e overlay textual
+│   ├── entities.js                           player, 4 tipos de inimigos, boss, projéteis
+│   └── game.js                               state machine, HUD, shop, lock-and-clear
+│
+├── dist/
+│   └── VoidDescent-1.0.0.exe                 executável final portátil
+│
+└── docs/
+    ├── main.pdf                              documentação técnica (35 páginas)
+    ├── main.tex, chapters/                   fonte LaTeX de cada capítulo
+    ├── diagrams/                             9 diagramas UML (.puml + .png)
+    └── Makefile                              make pdf para recompilar
+```
+
+## Stack tecnológico
+
+JavaScript puro, sem frameworks. WebGL 1.0 com shaders próprios. Sonant-X (port JavaScript do sintetizador Sonant). Electron 32 + electron-builder 25 para empacotamento.
