@@ -13,7 +13,7 @@ Três artefatos cobrem toda a entrega:
 1. **Executável Windows**: [`dist/VoidDescent-1.0.0.exe`](dist/VoidDescent-1.0.0.exe) (73 MB, portátil, x64).
    Na primeira execução, o Windows SmartScreen vai exibir o aviso "O Windows protegeu seu PC". Clicar em **Mais informações → Executar mesmo assim**.
 
-2. **Game Design Document**: [`GDD_VoidDescent.pdf`](GDD_VoidDescent.pdf).
+2. **Game Design Document**: [`docs/GDD_VoidDescent.pdf`](docs/GDD_VoidDescent.pdf).
    Conceito, mecânicas, game loop micro/macro, narrativa, level design, estética, planejamento técnico.
 
 3. **Documentação técnica**: [`docs/main.pdf`](docs/main.pdf) (35 páginas).
@@ -59,7 +59,6 @@ npm run build:win         # gera dist/VoidDescent-1.0.0.exe (cross-compile macOS
 ```
 /
 ├── README.md                                este arquivo
-├── GDD_VoidDescent.pdf, GDD_VoidDescent.tex  game design document
 ├── index.html                                entry point HTML
 ├── main.js                                   entry point Electron
 ├── package.json, package-lock.json           dependências e config de build
@@ -76,8 +75,9 @@ npm run build:win         # gera dist/VoidDescent-1.0.0.exe (cross-compile macOS
 │   └── VoidDescent-1.0.0.exe                 executável final portátil
 │
 └── docs/
+    ├── GDD_VoidDescent.pdf, .tex             game design document
     ├── main.pdf                              documentação técnica (35 páginas)
-    ├── main.tex, chapters/                   fonte LaTeX de cada capítulo
+    ├── main.tex, chapters/                   fonte LaTeX da documentação técnica
     ├── diagrams/                             9 diagramas UML (.puml + .png)
     └── Makefile                              make pdf para recompilar
 ```
