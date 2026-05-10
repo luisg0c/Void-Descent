@@ -189,7 +189,7 @@ O dash \'e a principal ferramenta defensiva e, argumentavelmente, a mec\^anica m
 
 \subsubsection{Vida}
 
-O jogador inicia cada run com 5 cora\c{c}\~oes, sendo que cada cora\c{c}\~ao representa 1 ponto de vida. O n\'umero 5 n\~ao \'e arbitr\'ario: com 5 pontos de vida, o jogador pode cometer exatamente 4 erros antes de morrer, o que \'e suficiente para ser toler\'avel nas primeiras salas, mas escasso o bastante para criar tens\~ao real nos andares mais profundos, onde a cura acumulada at\'e aquele ponto j\'a foi consumida. Ataques de inimigos comuns retiram 1 cora\c{c}\~ao, enquanto o boss retira 2 por golpe, o que torna os erros contra ele especialmente punitivos e comunica, sem nenhum texto explicativo, que o confronto final exige um n\'ivel de aten\c{c}\~ao e precis\~ao diferente de tudo que veio antes. Os itens de cura existem, mas s\~ao intencionalmente raros: aparecem em ba\'us ou como drops aleat\'orios ap\'os limpar salas, e restauram apenas 1 cora\c{c}\~ao por uso. O sistema n\~ao inclui nenhum tipo de regenera\c{c}\~ao passiva, de modo que cada hit recebido tem peso real e acumulativo na sobreviv\^encia da run: um jogador que chega ao Andar~3 com 2 cora\c{c}\~oes restantes est\'a em situa\c{c}\~ao fundamentalmente diferente de um que chega com 5, e essa diferen\c{c}a \'e resultado direto da performance nas salas anteriores. Essa escassez \'e uma decis\~ao de design central: ela for\c{c}a o jogador a tratar HP como um recurso estrat\'egico finito, n\~ao como algo que se recupera naturalmente com o tempo, e faz com que cada golpe evitado com sucesso tenha valor tang\'ivel na economia interna da run.
+O jogador inicia cada run com 5 cora\c{c}\~oes, sendo que cada cora\c{c}\~ao representa 1 ponto de vida. O n\'umero 5 n\~ao \'e arbitr\'ario: com 5 pontos de vida, o jogador pode cometer exatamente 4 erros antes de morrer, o que \'e suficiente para ser toler\'avel nas primeiras salas, mas escasso o bastante para criar tens\~ao real nos andares mais profundos, onde a cura acumulada at\'e aquele ponto j\'a foi consumida. Ataques de inimigos comuns retiram 1 cora\c{c}\~ao, enquanto o boss retira 2 por golpe, o que torna os erros contra ele especialmente punitivos e comunica, sem nenhum texto explicativo, que o confronto final exige um n\'ivel de aten\c{c}\~ao e precis\~ao diferente de tudo que veio antes. Os itens de cura existem, mas se tornam progressivamente mais escassos \`a medida que o jogador desce: aparecem em ba\'us ou como drops aleat\'orios ap\'os limpar salas, restauram apenas 1 cora\c{c}\~ao por uso e t\^em frequ\^encia de spawn mais alta no Andar~1 do que nos andares seguintes. O sistema n\~ao inclui nenhum tipo de regenera\c{c}\~ao passiva, de modo que cada hit recebido tem peso real e acumulativo na sobreviv\^encia da run: um jogador que chega ao Andar~3 com 2 cora\c{c}\~oes restantes est\'a em situa\c{c}\~ao fundamentalmente diferente de um que chega com 5, e essa diferen\c{c}a \'e resultado direto da performance nas salas anteriores. Essa escassez \'e uma decis\~ao de design central: ela for\c{c}a o jogador a tratar HP como um recurso estrat\'egico finito, n\~ao como algo que se recupera naturalmente com o tempo, e faz com que cada golpe evitado com sucesso tenha valor tang\'ivel na economia interna da run.
 
 \subsubsection{Itens}
 
@@ -199,7 +199,7 @@ Al\'em das armas, o jogador disp\~oe de 1 slot de \textbf{passivo}, que \'e ocup
 
 \subsubsection{Gera\c{c}\~ao Procedural de Dungeon}
 
-A gera\c{c}\~ao de cada andar \'e feita por um algoritmo de \textit{room placement}, que funciona da seguinte forma: salas retangulares de tamanhos variados s\~ao posicionadas aleatoriamente sobre uma grade bidimensional, respeitando regras de espa\c{c}amento m\'inimo para evitar sobreposi\c{c}\~ao e garantir corredores transpon\'iveis, e em seguida o algoritmo tra\c{c}a corredores para conect\'a-las. Ap\'os essa etapa, uma valida\c{c}\~ao por \textit{flood fill} percorre o mapa a partir do ponto de spawn do jogador para garantir que todas as salas sejam alcan\c{c}\'aveis; caso alguma sala fique isolada, o algoritmo descarta o layout e regenera integralmente at\'e obter um resultado v\'alido. Essa abordagem de gera\c{c}\~ao com p\'os-valida\c{c}\~ao garante que o jogador nunca encontre caminhos bloqueados ou salas inacess\'iveis, mantendo a integridade do fluxo de gameplay mesmo diante da aleatoriedade inerente ao processo. Os Andares~1 e~2 cont\^em entre 5 e 8 salas cada, incluindo obrigatoriamente uma sala de ba\'u. O Andar~3 \'e intencionalmente mais curto, composto por poucas salas regulares seguidas diretamente pela arena do boss, de modo a concentrar a tens\~ao no confronto final e evitar que o jogador chegue ao boss com fadiga decis\'oria excessiva.
+A gera\c{c}\~ao de cada andar \'e feita por um algoritmo de \textit{room placement}, que funciona da seguinte forma: salas retangulares de tamanhos variados s\~ao posicionadas aleatoriamente sobre uma grade bidimensional, respeitando regras de espa\c{c}amento m\'inimo para evitar sobreposi\c{c}\~ao e garantir corredores transpon\'iveis, e em seguida o algoritmo tra\c{c}a corredores para conect\'a-las. Ap\'os essa etapa, uma valida\c{c}\~ao por \textit{flood fill} percorre o mapa a partir do ponto de spawn do jogador para garantir que todas as salas sejam alcan\c{c}\'aveis; caso alguma sala fique isolada, o algoritmo descarta o layout e regenera integralmente at\'e obter um resultado v\'alido. Essa abordagem de gera\c{c}\~ao com p\'os-valida\c{c}\~ao garante que o jogador nunca encontre caminhos bloqueados ou salas inacess\'iveis, mantendo a integridade do fluxo de gameplay mesmo diante da aleatoriedade inerente ao processo. O Andar~1 cont\'em entre 5 e 6 salas e o Andar~2 entre 6 e 7 salas, ambos incluindo obrigatoriamente uma sala de ba\'u (ver Se\c{c}\~ao~\ref{sec:progressao} para detalhamento da progress\~ao de dificuldade por andar). O Andar~3 \'e intencionalmente mais curto, composto por poucas salas regulares seguidas diretamente pela arena do boss, de modo a concentrar a tens\~ao no confronto final e evitar que o jogador chegue ao boss com fadiga decis\'oria excessiva.
 
 O fluxo dentro de cada sala segue uma regra simples mas eficaz, comum a roguelikes cl\'assicos: ao entrar em uma sala que cont\'em inimigos, as portas trancam automaticamente e s\'o voltam a abrir quando todos os inimigos daquela sala forem eliminados. Esse mecanismo, conhecido como \textit{lock-and-clear}, cumpre duas fun\c{c}\~oes simult\^aneas: impede que o jogador evite combates simplesmente correndo pelas salas, e transforma cada sala em uma arena contida com in\'icio, meio e fim definidos, o que proporciona uma sensa\c{c}\~ao de conclus\~ao e recompensa a cada desafio superado. A escada de descida para o pr\'oximo andar aparece na \'ultima sala limpa do andar atual, incentivando o jogador a explorar o n\'ivel por completo antes de prosseguir e garantindo que ele enfrente todos os encontros projetados para aquele est\'agio de dificuldade.
 
@@ -389,6 +389,7 @@ O fluxo entre telas segue o requisito ``Menu ao Menu'', ou seja, o jogo sempre i
 \end{figure}
 
 \subsection{Progress\~ao de Dificuldade}
+\label{sec:progressao}
 
 A progress\~ao de dificuldade foi dividida em tr\^es momentos distintos e crescentes, cada um correspondendo a um andar da dungeon. Essa estrutura garante que o jogo nunca jogue o jogador numa situa\c{c}\~ao para a qual ele n\~ao foi preparado; cada andar introduz novos desafios de forma incremental.
 
@@ -643,5 +644,41 @@ Do ponto de vista de mercado, Void Descent se insere no subg\^enero de roguelike
 \end{table}
 
 Como a tabela evidencia, o diferencial central de Void Descent \'e a abordagem \textbf{zero assets}. Toda a experi\^encia, da arte aos mapas, dos inimigos ao som, \'e gerada exclusivamente por algoritmos, sem nenhum recurso externo. Enquanto os t\'itulos estabelecidos listados na tabela dependem de equipes dedicadas de artistas, animadores e designers de som para produzir seus conte\'udos visuais e sonoros, Void Descent demonstra que \'e poss\'ivel produzir uma experi\^encia coesa, coerente e visualmente impactante utilizando exclusivamente c\'odigo. Al\'em de funcionar como jogo, essa proposta tamb\'em serve como prova de conceito t\'ecnica, exibindo dom\'inio pr\'atico sobre WebGL, s\'intese de \'audio procedural e t\'ecnicas de gera\c{c}\~ao algor\'itmica aplicadas a m\'ultiplos dom\'inios simultaneamente.
+
+\newpage
+\appendix
+\section{Hist\'orico de Revis\~oes}
+\label{sec:revisoes}
+
+Este ap\^endice registra as altera\c{c}\~oes feitas no GDD ap\'os a entrega original da P1, garantindo rastreabilidade entre vers\~oes do documento.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{l l X}
+    \toprule
+    \textbf{Vers\~ao} & \textbf{Data} & \textbf{Altera\c{c}\~oes} \\
+    \midrule
+    1.0 & 02/mar/2026 & Vers\~ao inicial entregue na P1. \\
+    \addlinespace
+    1.1 & 09/mai/2026 & Revis\~ao de coer\^encia interna pr\'e-entrega da P2:
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item Se\c{c}\~ao 2.3.4 (Gera\c{c}\~ao): faixa de salas dos Andares 1 e 2
+          ajustada de ``entre 5 e 8 salas cada'' para ``5 a 6 (Andar 1) e 6 a 7
+          (Andar 2)'', alinhando com os valores espec\'ificos da Se\c{c}\~ao 5.2.
+        \item Se\c{c}\~ao 2.3.4 (Gera\c{c}\~ao): adicionada refer\^encia cruzada
+          \texttt{\textbackslash ref\{sec:progressao\}} para a se\c{c}\~ao de
+          progress\~ao detalhada.
+        \item Se\c{c}\~ao 2.3.2 (Vida): redacao sobre escassez de cura
+          reescrita para clarear que a raridade \'e \emph{progressiva por andar},
+          eliminando a tens\~ao com a descri\c{c}\~ao de ``drops generosos no
+          Andar 1'' presente na Se\c{c}\~ao 5.2.
+        \item Adi\c{c}\~ao deste ap\^endice de hist\'orico de revis\~oes.
+      \end{itemize} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+As altera\c{c}\~oes acima n\~ao mudam o escopo ou o conceito do jogo. Trata-se exclusivamente de \emph{polimento textual} para eliminar pontos de fric\c{c}\~ao detectados em revis\~ao sistem\'atica. Toda diverg\^encia entre o que o GDD prescreve e o que o jogo entrega est\'a documentada no Cap\'itulo 8 da \emph{Documenta\c{c}\~ao T\'ecnica} (\texttt{docs/main.pdf}), na se\c{c}\~ao ``Mudan\c{c}as de escopo em rela\c{c}\~ao ao GDD''.
 
 \end{document}
